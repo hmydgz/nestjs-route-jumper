@@ -43,9 +43,9 @@
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
     "compile": "npm run compile-src && npm run compile-web",
-    "compile-src": "tsc -p ./src && node ./.vscode/package-src.js",
+    "compile-src": "tsc -p ./src",
     "compile-web": "tsc -p ./web && node ./.vscode/package-web.js",
-    "watch": "tsc -w -p ./src && node ./.vscode/package-src.js && tsc -w -p ./web && node ./.vscode/package-web.js",
+    "watch": "tsc -w -p ./src && tsc -w -p ./web && node ./.vscode/package-web.js",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
