@@ -5,6 +5,9 @@ export enum ProjectType {
   NESTJS = 'NESTJS',
 }
 
+/**
+ * nest-cli.json json schema 生成的类型
+ */
 export namespace NestCliConfig {
   export interface Coordinate {
     /**

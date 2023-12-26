@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { NestCliConfig, ProjectType } from '../types';
 import { NestjsApp } from './app';
+import * as ts from 'typescript'
+import { createMatchPath, MatchPath } from 'tsconfig-paths'
 
 /**
  * 项目分析
@@ -40,18 +42,54 @@ export class ProjectAnalysis {
 export class Project {
   projectType: ProjectType = ProjectType.UNKNOW
   appMap: Map<string, NestjsApp> = new Map()
+  private dependencies = new Set<string>()
+
+  private _pathResolver!: MatchPath
 
   constructor(public dirPath: string) {
     this.getProjectType()
+    this.initPathResolve()
+    this.updateDependencies()
+  }
+
+  private initPathResolve() {
+    // 获取 tsconfig.json 的路径
+    const tsconfigPath = ts.findConfigFile(this.dirPath, ts.sys.fileExists)
+    let basePath = this.dirPath
+    let paths = {}
+    if (tsconfigPath) {
+      const { config } = ts.readConfigFile(tsconfigPath, ts.sys.readFile)
+      basePath = path.resolve(this.dirPath, config.compilerOptions.baseUrl || '.')
+      paths = config.compilerOptions.paths ?? {}
+    }
+    this._pathResolver = createMatchPath(basePath, paths)
+  }
+
+  updateDependencies() {
+    const _package = JSON.parse(fs.readFileSync(path.join(this.dirPath, 'package.json'), 'utf-8'))
+    Object.keys(Object.assign({}, _package.dependencies, _package.devDependencies)).forEach(v => {
+      this.dependencies.add(v)
+    })
+  }
+
+  pathResolver(_path: string) {
+    const paths = _path.split('/')
+    let subPath = ''
+    for (let index = 0; index < paths.length; index++) {
+      subPath += '/' + paths[index];
+      // 是 npm 包就直接返回 undefined
+      if (this.dependencies.has(subPath)) return undefined
+    }
+
+    return this._pathResolver(_path)
   }
 
   getProjectType() {
+    // 留点扩展空间，方便以后支持其他类型的项目
     const nestCliPath = path.join(this.dirPath, 'nest-cli.json')
     if (fs.existsSync(nestCliPath)) {
       this.projectType = ProjectType.NESTJS
       this.scanNestjsApp(nestCliPath)
-    } else {
-      this.projectType = ProjectType.UNKNOW
     }
   }
 
@@ -59,11 +97,19 @@ export class Project {
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as NestCliConfig.Coordinate
     config.projects && Object.entries(config.projects).forEach(([appName, project]) => {
       if (!project.sourceRoot) return
-      this.appMap.set(appName, new NestjsApp(path.resolve(configPath, '../', project.sourceRoot), project.entryFile as string))
+      this.appMap.set(appName, new NestjsApp({
+        sourceRoot: path.resolve(configPath, '../', project.sourceRoot),
+        entryFile: project.entryFile as string,
+        project: this
+      }))
     })
 
     if (!config.monorepo) {
-      this.appMap.set('main', new NestjsApp(path.resolve(configPath, '../', config.sourceRoot || 'src'), config.entryFile || 'main'))
+      this.appMap.set('main', new NestjsApp({
+        sourceRoot: path.resolve(configPath, '../', config.sourceRoot || 'src'),
+        entryFile: config.entryFile ||'main',
+        project: this
+      }))
     }
   }
 }

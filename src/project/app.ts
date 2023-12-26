@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { Project } from './index'
 
 // type DependencyTree = any
 
@@ -7,13 +8,19 @@ import * as path from 'path';
  * Nestjs App
  */
 export class NestjsApp {
-  // dependencyTree: DependencyTree;
-  mainFile?: string;
+  mainFile?: string
+  entryFile: string;
+  sourceRoot: string;
+  project: Project;
 
-  constructor(
-    public sourceRoot: string,
-    public entryFile: string,
-  ) {
+  constructor({ sourceRoot, entryFile, project }: {
+    sourceRoot: string
+    entryFile: string
+    project: Project
+  }) {
+    this.entryFile = entryFile
+    this.sourceRoot = sourceRoot
+    this.project = project
     fs.readdirSync(sourceRoot, { withFileTypes: true }).forEach(v => {
       if (v.name.startsWith(entryFile)) {
         this.mainFile = path.join(sourceRoot, v.name);
