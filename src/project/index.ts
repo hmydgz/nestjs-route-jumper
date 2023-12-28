@@ -47,8 +47,8 @@ export class Project {
   private _pathResolver!: MatchPath
 
   constructor(public dirPath: string) {
-    this.getProjectType()
     this.initPathResolve()
+    this.getProjectType()
     this.updateDependencies()
   }
 
@@ -72,7 +72,12 @@ export class Project {
     })
   }
 
-  pathResolver(_path: string) {
+  pathResolver(filePath: string, _path: string) {
+    // if (_path.startsWith('.')) { // 相对路径
+
+    // } else { // 别名路径或包
+
+    // }
     const paths = _path.split('/')
     let subPath = ''
     for (let index = 0; index < paths.length; index++) {
