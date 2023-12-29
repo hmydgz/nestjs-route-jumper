@@ -4,6 +4,12 @@ import { Project } from './index'
 import * as ts from 'typescript'
 import { getIdentifierName } from '../utils/ast';
 
+type NestModule = {
+  path: string
+  isDefault: boolean
+  name?: string
+}
+
 /**
  * Nestjs App
  */
@@ -15,6 +21,7 @@ export class NestjsApp {
   versionSet: Set<string> = new Set();
   moduleMap: Map<string, any> = new Map();
   globalPrefix = '';
+  entryModule?: NestModule
 
   constructor({ sourceRoot, entryFile, project }: {
     sourceRoot: string
@@ -45,7 +52,6 @@ export class NestjsApp {
     const identifiers = (ast as any).identifiers as Map<string, string>
 
     if (identifiers.has('NestFactory') && identifiers.has('create')) { // 可能存在 NestFactory.create，需要检查
-      console.log(this.mainFile, identifiers)
       this.findAppModule(ast)
     }
   }
@@ -55,7 +61,7 @@ export class NestjsApp {
    */
   findAppModule(ast: ts.SourceFile) {
     let appModuleName = undefined
-    const importVarMap: Record<string, { isDefault: boolean, path: string, name?: string }> = {}
+    const importVarMap: Record<string, NestModule> = {}
     function traverseAST(node: ts.Node) {
       ts.forEachChild(node, (node) => {
         switch (node.kind) {
@@ -95,9 +101,14 @@ export class NestjsApp {
     traverseAST(ast)
 
     const appModule = importVarMap[appModuleName as unknown as string]
-    console.log(appModule)
-    console.log(importVarMap)
+    const appModulePath = this.project.pathResolver(this.mainFile, appModule.path)
+    if (appModulePath) {
+      appModule.path = appModulePath
+      this.findModule(appModule)
+    }
+  }
 
-    console.log(this.project.pathResolver(this.entryFile, appModule.path))
+  findModule(module: NestModule) {
+    console.log('findModule', module)
   }
 }

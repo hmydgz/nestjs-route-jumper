@@ -5,6 +5,7 @@ import { NestCliConfig, ProjectType } from '../types';
 import { NestjsApp } from './app';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
+import { getIndexFilePath } from '../utils';
 
 /**
  * 项目分析
@@ -44,6 +45,10 @@ export class Project {
   appMap: Map<string, NestjsApp> = new Map()
   private dependencies = new Set<string>()
 
+  /**
+   * 别名路径缓存
+   */
+  private cacheAliasPathMap = new Map<string, string>()
   private _pathResolver!: MatchPath
 
   constructor(public dirPath: string) {
@@ -73,11 +78,8 @@ export class Project {
   }
 
   pathResolver(filePath: string, _path: string) {
-    // if (_path.startsWith('.')) { // 相对路径
-
-    // } else { // 别名路径或包
-
-    // }
+    const hasSuffix = _path.endsWith('.ts')
+    // 判断是否是 npm 包路径
     const paths = _path.split('/')
     let subPath = ''
     for (let index = 0; index < paths.length; index++) {
@@ -86,7 +88,34 @@ export class Project {
       if (this.dependencies.has(subPath)) return undefined
     }
 
-    return this._pathResolver(_path)
+    // 判断是否是相对路径
+    const dirPath = path.resolve(filePath, '../')
+    const relativePaths = [ // 假设是相对路径
+      path.resolve(dirPath, _path),
+      dirPath + _path,
+    ]
+    relativePaths.push(...(hasSuffix ? [] : relativePaths.map(v => v + '.ts')))
+    for (const v of relativePaths) {
+      if (fs.existsSync(v)) {
+        const _filePath = getIndexFilePath(v)
+        if (_filePath) return _filePath
+      }
+    }
+
+    // 检查别名路径缓存
+    if (this.cacheAliasPathMap.has(_path)) return this.cacheAliasPathMap.get(_path)
+    // 判断是否是别名路径
+    const possiblePaths = [_path]
+    if (!hasSuffix) possiblePaths.push(_path + '.ts')
+    for (const v of possiblePaths) {
+      const value = this._pathResolver(v)
+      if (value && fs.existsSync(value) && fs.lstatSync(value).isFile()) {
+        this.cacheAliasPathMap.set(_path, value)
+        return value
+      }
+    }
+
+    return undefined
   }
 
   getProjectType() {
