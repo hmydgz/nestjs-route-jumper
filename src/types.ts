@@ -5,6 +5,12 @@ export enum ProjectType {
   NESTJS = 'NESTJS',
 }
 
+export type ImportVarInfo = {
+  path: string
+  isDefault: boolean
+  name?: string
+}
+
 /**
  * nest-cli.json json schema 生成的类型
  */

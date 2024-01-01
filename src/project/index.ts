@@ -7,17 +7,19 @@ import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
 import { getIndexFilePath } from '../utils';
 
+// 忽略的目录
+const ignoreDirs = ['node_modules', '.git', '.github', '.vscode', '.idea']
+const ignoreDirsReg = new RegExp(ignoreDirs.map(v => `(${v})`).join('|'), 'g')
+
 /**
  * 项目分析
  */
 export class ProjectAnalysis {
-  hasNestjsProject: boolean = false;
-  projectMap: Map<string, any> = new Map();
+  projectMap: Map<string, Project> = new Map();
 
   constructor() {
-    vscode.workspace.workspaceFolders?.forEach(async (workspace) => {
-      await this.scanProject(workspace.uri.fsPath);
-      console.log(this.projectMap)
+    vscode.workspace.workspaceFolders?.forEach((workspace) => {
+      this.scanProject(workspace.uri.fsPath)
     });
   }
 
@@ -26,7 +28,7 @@ export class ProjectAnalysis {
     const links = await fs.promises.readdir(filePath, { withFileTypes: true })
     links.forEach(link => {
       const _path = path.join(filePath, link.name)
-      if (link.isDirectory() && !(/(node_modules)|(.git)/g.test(_path))) {
+      if (link.isDirectory() && !(ignoreDirsReg.test(_path))) {
         dirs.push(_path)
       } else if (link.name === 'package.json') {
         this.projectMap.set(filePath, new Project(filePath))
@@ -54,6 +56,7 @@ export class Project {
   constructor(public dirPath: string) {
     this.initPathResolve()
     this.getProjectType()
+    this.scanApp()
     this.updateDependencies()
   }
 
@@ -80,10 +83,9 @@ export class Project {
   pathResolver(filePath: string, _path: string) {
     const hasSuffix = _path.endsWith('.ts')
     // 判断是否是 npm 包路径
-    const paths = _path.split('/')
     let subPath = ''
-    for (let index = 0; index < paths.length; index++) {
-      subPath += '/' + paths[index];
+    for (const v of _path.split('/')) {
+      subPath ? (subPath += '/' + v) : (subPath = v)
       // 是 npm 包就直接返回 undefined
       if (this.dependencies.has(subPath)) return undefined
     }
@@ -123,11 +125,19 @@ export class Project {
     const nestCliPath = path.join(this.dirPath, 'nest-cli.json')
     if (fs.existsSync(nestCliPath)) {
       this.projectType = ProjectType.NESTJS
-      this.scanNestjsApp(nestCliPath)
     }
   }
 
-  scanNestjsApp(configPath: string) {
+  scanApp() {
+    switch (this.projectType) {
+      case ProjectType.NESTJS:
+        this.scanNestjsApp()
+        break
+    }
+  }
+
+  scanNestjsApp() {
+    const configPath = path.join(this.dirPath, 'nest-cli.json')
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as NestCliConfig.Coordinate
     config.projects && Object.entries(config.projects).forEach(([appName, project]) => {
       if (!project.sourceRoot) return
