@@ -13,10 +13,10 @@ export class NestjsApp {
   entryFile: string;
   sourceRoot: string;
   project: Project;
-  // /**
-  //  * 模块映射
-  //  */
-  // moduleMap: Map<string, any> = new Map();
+  /**
+   * 模块映射
+   */
+  moduleMap: Map<string, any> = new Map();
   /**
    * 全局前缀
    */
@@ -40,6 +40,8 @@ export class NestjsApp {
   private _currentASTFilePath = '';
 
   importVarMap = new Map<string, Record<string, ImportVarInfo>>()
+
+  controllerMap = new Map<string, string[]>()
 
   constructor({ sourceRoot, entryFile, project }: {
     sourceRoot: string
@@ -145,6 +147,20 @@ export class NestjsApp {
 
   findModule(_module: ImportVarInfo) {
     const ast = this.getAST(_module.path)
+    const importModules: ImportVarInfo[] = []
+    const controllers: ImportVarInfo[] = []
+
+    const importVarMap = this.importVarMap.get(_module.path)!
+    const findImportVar = (elements: ts.NodeArray<ts.Expression>, list: ImportVarInfo[]) => {
+      elements?.forEach(v => {
+        const name = Ast.getIdentifierName(v as ts.Identifier)
+        if (importVarMap[name]) {
+          const _path = this.project.pathResolver(_module.path, importVarMap[name].path)
+          _path && list.push(Object.assign({}, importVarMap[name], { path: _path }))
+        }
+      })
+    }
+
     Ast.traverse(ast, (node, next) => {
       switch (node.kind) {
         case ts.SyntaxKind.ImportDeclaration:
@@ -154,10 +170,11 @@ export class NestjsApp {
           const classNode = node as ts.ClassDeclaration
           const name = Ast.getIdentifierName(classNode.name as ts.Identifier)
           const { isDefault, isExport, decorators } = Ast.filterDecorator(classNode.modifiers!)
-          if (!isExport || _module.isDefault !== isDefault || _module.name !== name) return
+          if (!isExport || _module.isDefault !== isDefault || (!_module.isDefault && _module.name !== name)) return
           if ('Module' in decorators) {
-            const res = NestDecorator.getModuleArgs(decorators.Module[0])
-            console.log(res)
+            const args = NestDecorator.getModuleArgs(decorators.Module[0])
+            findImportVar(args?.imports?.elements!, importModules)
+            findImportVar(args?.controllers?.elements!, controllers)
           }
         } break
         default:
@@ -165,9 +182,34 @@ export class NestjsApp {
           break
       }
     })
+
+    importModules.forEach(v => this.findModule(v))
+    controllers.forEach(v => this.findController(v))
   }
 
-  findController() {
+  findController(_module: ImportVarInfo) {
+    const ast = this.getAST(_module.path)
 
+    Ast.traverse(ast, (node, next) => {
+      switch (node.kind) {
+        case ts.SyntaxKind.ImportDeclaration:
+          this.saveImportVar(node as ts.ImportDeclaration)
+          break
+        case ts.SyntaxKind.ClassDeclaration: {
+          const classNode = node as ts.ClassDeclaration
+          const name = Ast.getIdentifierName(classNode.name as ts.Identifier)
+          const { isDefault, isExport, decorators } = Ast.filterDecorator(classNode.modifiers!)
+          if (!isExport || _module.isDefault !== isDefault || (!_module.isDefault && _module.name !== name)) return
+          // 找到指定 Controller
+          if ('Controller' in decorators) {
+            console.log(decorators.Controller)
+            // NestDecorator.getControllerArgs(decorators.Controller)
+          }
+        } break
+        default:
+          next()
+          break
+      }
+    })
   }
 }

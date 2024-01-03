@@ -94,4 +94,8 @@ export namespace NestDecorator {
 
     return obj
   }
+
+  export const getControllerArgs = () => {
+
+  }
 }
