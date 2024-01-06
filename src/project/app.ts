@@ -2,8 +2,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Project } from './index'
 import * as ts from 'typescript'
-import { Ast, NestDecorator } from '../utils/ast';
+import { AST, NestDecorator } from '../utils/ast';
 import { ImportVarInfo } from '../types';
+
+type FilePath = string
+type ModuleName = string
 
 /**
  * Nestjs App
@@ -16,7 +19,7 @@ export class NestjsApp {
   /**
    * 模块映射
    */
-  moduleMap: Map<string, any> = new Map();
+  moduleMap: Map<FilePath, Record<ModuleName, any>> = new Map();
   /**
    * 全局前缀
    */
@@ -81,7 +84,7 @@ export class NestjsApp {
     this._currentASTFilePath = filePath
     if (!this.importVarMap.has(filePath)) this.importVarMap.set(filePath, {})
     if (this.astMap.has(filePath)) return this.astMap.get(filePath) as ts.SourceFile
-    const ast = Ast.getAST(filePath)
+    const ast = AST.getAST(filePath)
     this.astMap.set(filePath, ast)
     return ast
   }
@@ -91,7 +94,7 @@ export class NestjsApp {
    */
   saveImportVar(node: ts.ImportDeclaration, filePath = this._currentASTFilePath) {
     const map = this.importVarMap.get(filePath)
-    Object.assign(map!, Ast.getImportVar(node as ts.ImportDeclaration))
+    Object.assign(map!, AST.getImportVar(node as ts.ImportDeclaration))
   }
 
   /**
@@ -100,7 +103,7 @@ export class NestjsApp {
   findAppModule(ast: ts.SourceFile) {
     let appModuleName = undefined
 
-    Ast.traverse(ast, (node, next) => {
+    AST.traverse(ast, (node, next) => {
       switch (node.kind) {
         case ts.SyntaxKind.ImportDeclaration: {
           this.saveImportVar(node as ts.ImportDeclaration)
@@ -112,8 +115,8 @@ export class NestjsApp {
             const expressionText = obj.getText(ast).replace(/[\n\s]/g, '')
             // 获取 AppModule
             if (expressionText === 'NestFactory.create') {
-              if (_node.arguments[0].kind === ts.SyntaxKind.Identifier) {
-                appModuleName = Ast.getIdentifierName(_node.arguments[0] as ts.Identifier)
+              if (_node.arguments.length && _node.arguments[0].kind === ts.SyntaxKind.Identifier) {
+                appModuleName = AST.getIdentifierName(_node.arguments[0] as ts.Identifier)
               }
             // 获取公共前缀
             } else if (expressionText.includes('setGlobalPrefix')) {
@@ -153,7 +156,7 @@ export class NestjsApp {
     const importVarMap = this.importVarMap.get(_module.path)!
     const findImportVar = (elements: ts.NodeArray<ts.Expression>, list: ImportVarInfo[]) => {
       elements?.forEach(v => {
-        const name = Ast.getIdentifierName(v as ts.Identifier)
+        const name = AST.getIdentifierName(v as ts.Identifier)
         if (importVarMap[name]) {
           const _path = this.project.pathResolver(_module.path, importVarMap[name].path)
           _path && list.push(Object.assign({}, importVarMap[name], { path: _path }))
@@ -161,18 +164,18 @@ export class NestjsApp {
       })
     }
 
-    Ast.traverse(ast, (node, next) => {
+    AST.traverse(ast, (node, next) => {
       switch (node.kind) {
         case ts.SyntaxKind.ImportDeclaration:
           this.saveImportVar(node as ts.ImportDeclaration)
           break
         case ts.SyntaxKind.ClassDeclaration: {
           const classNode = node as ts.ClassDeclaration
-          const name = Ast.getIdentifierName(classNode.name as ts.Identifier)
-          const { isDefault, isExport, decorators } = Ast.filterDecorator(classNode.modifiers!)
+          const name = AST.getIdentifierName(classNode.name as ts.Identifier)
+          const { isDefault, isExport, decorators } = AST.filterDecorator(classNode.modifiers!)
           if (!isExport || _module.isDefault !== isDefault || (!_module.isDefault && _module.name !== name)) return
           if ('Module' in decorators) {
-            const args = NestDecorator.getModuleArgs(decorators.Module[0])
+            const args = NestDecorator.Module.getArgs(decorators.Module[0])
             findImportVar(args?.imports?.elements!, importModules)
             findImportVar(args?.controllers?.elements!, controllers)
           }
@@ -183,27 +186,39 @@ export class NestjsApp {
       }
     })
 
-    importModules.forEach(v => this.findModule(v))
-    controllers.forEach(v => this.findController(v))
+    importModules.forEach(v => {
+      this.findModule(v)
+    })
+    controllers.forEach(v => {
+      this.findController(v)
+    })
+
+    if (!this.moduleMap.has(_module.path)) this.moduleMap.set(_module.path, {})
+    this.moduleMap.get(_module.path)![_module.name || 'DefaultExportModule'] = {
+      name: _module.name || 'DefaultExportModule',
+      importModules,
+      controllers,
+    }
   }
 
   findController(_module: ImportVarInfo) {
     const ast = this.getAST(_module.path)
 
-    Ast.traverse(ast, (node, next) => {
+    AST.traverse(ast, (node, next) => {
       switch (node.kind) {
         case ts.SyntaxKind.ImportDeclaration:
           this.saveImportVar(node as ts.ImportDeclaration)
           break
         case ts.SyntaxKind.ClassDeclaration: {
           const classNode = node as ts.ClassDeclaration
-          const name = Ast.getIdentifierName(classNode.name as ts.Identifier)
-          const { isDefault, isExport, decorators } = Ast.filterDecorator(classNode.modifiers!)
+          const name = AST.getIdentifierName(classNode.name as ts.Identifier)
+          const { isDefault, isExport, decorators } = AST.filterDecorator(classNode.modifiers!)
           if (!isExport || _module.isDefault !== isDefault || (!_module.isDefault && _module.name !== name)) return
           // 找到指定 Controller
-          if ('Controller' in decorators) {
-            console.log(decorators.Controller)
-            // NestDecorator.getControllerArgs(decorators.Controller)
+          if (decorators.hasOwnProperty('Controller')) {
+            const options = NestDecorator.Controller.getArgs(decorators.Controller)
+            console.log(options)
+            console.log(NestDecorator.RequsetMapping.getMapping(classNode))
           }
         } break
         default:

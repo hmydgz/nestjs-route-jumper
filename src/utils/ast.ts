@@ -1,9 +1,9 @@
 import * as ts from 'typescript'
 import * as fs from 'fs';
 import { ImportVarInfo } from '../types'
-import { ModuleMetadata } from '@nestjs/common'
+import { ControllerOptions, ModuleMetadata } from '@nestjs/common'
 
-export namespace Ast {
+export namespace AST {
   export function getAST(filePath: string) {
     if (!fs.existsSync(filePath)) throw new Error('path does not exist')
     return ts.createSourceFile(
@@ -56,18 +56,20 @@ export namespace Ast {
    * 过滤装饰器
    */
   export const filterDecorator = (_nodes: ts.NodeArray<ts.Node>) => {
-    const decorators: Record<string, ts.NodeArray<ts.Node>> = {}
+    type DecoratorArgs = ts.NodeArray<ts.Expression>
+
+    const decorators: Record<string, DecoratorArgs> = {}
     let isDefault = false
     let isExport = false
     _nodes.forEach(v => {
       switch (v.kind) {
-        case ts.SyntaxKind.ExportKeyword:
+        case ts.SyntaxKind.ExportKeyword: // 关键字
           isExport = true
           break
-        case ts.SyntaxKind.DefaultKeyword:
+        case ts.SyntaxKind.DefaultKeyword: // 关键字
           isDefault = true
           break
-        case ts.SyntaxKind.Decorator: {
+        case ts.SyntaxKind.Decorator: { // 装饰器
           const node = v as ts.Decorator
           const decorator = node.expression as ts.CallExpression
           const name = getIdentifierName(decorator.expression as ts.Identifier)
@@ -78,24 +80,110 @@ export namespace Ast {
 
     return { decorators, isDefault, isExport }
   }
+
+  export const getStringList = (_node: ts.Node) => {
+    let _strings: string[] = []
+    switch (_node.kind) {
+      case ts.SyntaxKind.StringLiteral: { // 字符串
+        _strings.push((_node as ts.StringLiteral).text)
+      } break
+      case ts.SyntaxKind.ArrayLiteralExpression: { // 字符串数组
+        (_node as ts.ArrayLiteralExpression).elements.forEach(v => {
+          if (v.kind !== ts.SyntaxKind.StringLiteral) return
+          _strings.push((v as ts.StringLiteral).text)
+        })
+      } break
+    }
+
+    return _strings
+  }
 }
 
 export namespace NestDecorator {
-  export const getModuleArgs = (node: ts.Node) => {
-    if (node.kind !== ts.SyntaxKind.ObjectLiteralExpression) return undefined
-    const obj: { [key in keyof ModuleMetadata]?: ts.ArrayLiteralExpression } = {}
-    const _node = node as ts.ObjectLiteralExpression
-    _node.properties.forEach(v => {
-      if (v.kind === ts.SyntaxKind.PropertyAssignment) {
-        const key = Ast.getIdentifierName(v.name as ts.Identifier) as keyof ModuleMetadata
-        obj[key] = v.initializer as ts.ArrayLiteralExpression
-      }
-    })
-
-    return obj
+  export namespace Module {
+    export const getArgs = (node: ts.Node) => {
+      if (node.kind !== ts.SyntaxKind.ObjectLiteralExpression) return undefined
+      const obj: { [key in keyof ModuleMetadata]?: ts.ArrayLiteralExpression } = {}
+      const _node = node as ts.ObjectLiteralExpression
+      _node.properties.forEach(v => {
+        if (v.kind === ts.SyntaxKind.PropertyAssignment) {
+          const key = AST.getIdentifierName(v.name as ts.Identifier) as keyof ModuleMetadata
+          obj[key] = v.initializer as ts.ArrayLiteralExpression
+        }
+      })
+      return obj
+    }
   }
 
-  export const getControllerArgs = () => {
+  export namespace Controller {
+    export const getArgs = (_node: ts.NodeArray<ts.Node>) => {
+      const obj: ControllerOptions = {
+        path: [],
+        version: [],
+      }
 
+      if (_node.length === 0) {
+        obj.path = ['']
+      } else {
+        switch (_node[0].kind) {
+          case ts.SyntaxKind.StringLiteral:
+          case ts.SyntaxKind.ArrayLiteralExpression: {
+            obj.path = AST.getStringList(_node[0])
+          } break
+          case ts.SyntaxKind.ObjectLiteralExpression: {
+            const node = _node[0] as ts.ObjectLiteralExpression
+            node.properties.forEach(v => {
+              const key = AST.getIdentifierName(v.name as ts.Identifier)
+              if (
+                obj.hasOwnProperty(key) &&
+                [ts.SyntaxKind.StringLiteral, ts.SyntaxKind.ArrayLiteralExpression].includes(v.kind)
+              ) {
+                const _v = v as ts.PropertyAssignment
+                // @ts-ignore
+                obj[key] = AST.getStringList(_v.initializer)
+              }
+            })
+          } break
+        }
+      }
+
+      return obj
+    }
+  }
+
+  export namespace RequsetMapping {
+    export const ReqMethodSet = new Set(['Get', 'Post', 'Put', 'Delete', 'Patch', 'All', 'Options', 'Head', 'Search'])
+
+    export type Method = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search'
+
+    export const getMapping = (classNode: ts.ClassDeclaration) => {
+      const mappings: {
+        method: Method,
+        path: string[],
+        version: string[],
+        fn: ts.Node
+      }[] = []
+      classNode.members.forEach(_member => {
+        if (_member.kind !== ts.SyntaxKind.MethodDeclaration) return
+        const member = _member as ts.MethodDeclaration
+        const { decorators } = AST.filterDecorator(member.modifiers!)
+        let version: string[] = []
+        if (decorators.hasOwnProperty('Version') && decorators['Version'].length) {
+          version = AST.getStringList(decorators['Version'][0])
+        }
+        Object.entries(decorators).forEach(([key, args]) => {
+          if (ReqMethodSet.has(key)) {
+            mappings.push({
+              method: key as Method,
+              path: args.length ? AST.getStringList(args[0]) : [''],
+              version,
+              fn: member,
+            })
+          }
+        })
+      })
+
+      return mappings
+    }
   }
 }
