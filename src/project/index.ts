@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { NestCliConfig, ProjectType } from '../types';
-import { NestjsApp } from './app';
+import { Nest } from './app';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
 import { getIndexFilePath } from '../utils';
@@ -44,7 +44,7 @@ export class ProjectAnalysis {
  */
 export class Project {
   projectType: ProjectType = ProjectType.UNKNOW
-  appMap: Map<string, NestjsApp> = new Map()
+  appMap: Map<string, Nest.App> = new Map()
   private dependencies = new Set<string>()
 
   /**
@@ -141,7 +141,7 @@ export class Project {
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as NestCliConfig.Coordinate
     config.projects && Object.entries(config.projects).forEach(([appName, project]) => {
       if (!project.sourceRoot) return
-      this.appMap.set(appName, new NestjsApp({
+      this.appMap.set(appName, new Nest.App({
         sourceRoot: path.resolve(configPath, '../', project.sourceRoot),
         entryFile: project.entryFile as string,
         project: this
@@ -149,7 +149,7 @@ export class Project {
     })
 
     if (!config.monorepo) {
-      this.appMap.set('main', new NestjsApp({
+      this.appMap.set('main', new Nest.App({
         sourceRoot: path.resolve(configPath, '../', config.sourceRoot || 'src'),
         entryFile: config.entryFile ||'main',
         project: this

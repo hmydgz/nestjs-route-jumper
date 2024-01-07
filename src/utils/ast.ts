@@ -135,8 +135,9 @@ export namespace NestDecorator {
             node.properties.forEach(v => {
               const key = AST.getIdentifierName(v.name as ts.Identifier)
               if (
+                v.kind === ts.SyntaxKind.PropertyAssignment &&
                 obj.hasOwnProperty(key) &&
-                [ts.SyntaxKind.StringLiteral, ts.SyntaxKind.ArrayLiteralExpression].includes(v.kind)
+                [ts.SyntaxKind.StringLiteral, ts.SyntaxKind.ArrayLiteralExpression].includes((v as ts.PropertyAssignment).initializer.kind)
               ) {
                 const _v = v as ts.PropertyAssignment
                 // @ts-ignore
@@ -156,13 +157,16 @@ export namespace NestDecorator {
 
     export type Method = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search'
 
+    export type Mapping = {
+      method: Method,
+      path: string[],
+      version: string[],
+      fn: ts.MethodDeclaration
+      name: string
+    }
+
     export const getMapping = (classNode: ts.ClassDeclaration) => {
-      const mappings: {
-        method: Method,
-        path: string[],
-        version: string[],
-        fn: ts.Node
-      }[] = []
+      const mappings: Mapping[] = []
       classNode.members.forEach(_member => {
         if (_member.kind !== ts.SyntaxKind.MethodDeclaration) return
         const member = _member as ts.MethodDeclaration
@@ -178,6 +182,7 @@ export namespace NestDecorator {
               path: args.length ? AST.getStringList(args[0]) : [''],
               version,
               fn: member,
+              name: AST.getIdentifierName(member.name as ts.Identifier)
             })
           }
         })

@@ -22,3 +22,7 @@ export function getIndexFilePath(_path: string, indexName = 'index.ts') {
 		}
 	}
 }
+
+export function joinPath(path1: string, path2: string) {
+	return `${path1}${path1.endsWith('/') ? '' : '/'}${path2 ? path2.startsWith('/') ? path2.substring(1, path2.length) : path2 : ''}`
+}
