@@ -25,6 +25,12 @@ export namespace Nest {
     name: string
   }
 
+  type AppPath = (Omit<NestDecorator.RequsetMapping.Mapping, 'path' | 'version'> & {
+    version?: string
+    path: string
+    filePath: string
+  })
+
   /**
  * Nestjs App
  */
@@ -65,6 +71,15 @@ export namespace Nest {
      * Controller 映射
      */
     controllerMap = new Map<FilePath, Record<ModuleName, Controller>>()
+
+    /**
+     * 访问集合
+     */
+    paths?: AppPath[]
+    /**
+     * 访问映射
+     */
+    pathMap = new Map<string, AppPath[]>()
 
     constructor({ sourceRoot, entryFile, project }: {
       sourceRoot: string
@@ -279,6 +294,8 @@ export namespace Nest {
             let prefix = this.globalPrefix || ''
             if (this.enableVersioning && v.version) prefix += `/v${v.version}`
             if (prefix) v.path = prefix + v.path
+            if (!this.pathMap.has(v.path)) this.pathMap.set(v.path, [])
+            this.pathMap.get(v.path)?.push(v)
             paths.push(v)
           })
         })
@@ -287,16 +304,11 @@ export namespace Nest {
       }
 
       traverse(this.entryModule)
-
-      console.log(paths)
+      this.paths = paths
     }
 
     getControllerPath(_controller: Controller, _prefix = '') {
-      const paths: (Omit<NestDecorator.RequsetMapping.Mapping, 'path' | 'version'> & {
-        version?: string
-        path: string
-        filePath: string
-      })[] = []
+      const paths: AppPath[] = []
       _controller.path?.forEach(v => {
         const prefix = joinPath(_prefix, v)
         _controller.mappings.forEach(mapping => {
@@ -319,6 +331,12 @@ export namespace Nest {
       })
 
       return paths
+    }
+
+    search(_search: string) {
+      const search = _search.split('?')[0]
+      if (this.pathMap.has(search)) return this.pathMap.get(search) ?? []
+      return this.paths?.filter(v => v.path.includes(search))
     }
   }
 }

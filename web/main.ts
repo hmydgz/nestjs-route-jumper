@@ -38,7 +38,6 @@ window.addEventListener('load', () => {
   /* window.main =  */new MainView(document.getElementById('view') as HTMLElement);
 
   window.addEventListener('message', (e) => {
-    console.log(e.data);
     sendMessage({ type: 'res' });
   });
 
