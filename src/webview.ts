@@ -46,8 +46,8 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
   }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
-    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'out.min.js'));
-    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'out.min.css'));
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'out.js'));
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'style.css'));
     const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
 
     // Use a nonce to only allow a specific script to be run.
@@ -62,18 +62,20 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
           and only allow scripts that have a specific nonce.
           (See the 'webview-sample' extension sample for img-src content security policy examples)
         -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="${styleUri}" rel="stylesheet">
-        <link href="${codiconsUri}" rel="stylesheet">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href="${codiconsUri}" rel="stylesheet" />
+        <link href="${styleUri}" rel="stylesheet" />
 
+        <script>
+          window.process = { env: { NODE_ENV: 'production' } }
+        </script>
+
+        <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
         <title>Nestjs Route Jumper</title>
       </head>
       <body>
-        <div id="view">
-          <div class="search-bar"></div>
-        </div>
-        <script nonce="${nonce}" src="${scriptUri}"></script>
+        <div id="root"></div>
       </body>
       </html>`;
   }

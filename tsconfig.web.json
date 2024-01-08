@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"outDir": "out",
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"sourceMap": false,
+		"rootDir": "web",
+		"strict": true,
+		/* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+		"composite": true,
+    "jsx": "react-jsx",
+	},
+	"include": ["web"],
+	"references": [{ "path": "./tsconfig.node.json" }]
+}

@@ -44,8 +44,9 @@
     "vscode:prepublish": "pnpm run compile",
     "compile": "npm run compile-src && npm run compile-web",
     "compile-src": "tsc -p ./src",
-    "compile-web": "tsc -p ./web && node ./.vscode/package-web.js",
-    "watch": "tsc -w -p ./src && tsc -w -p ./web && node ./.vscode/package-web.js",
+    "compile-web": "tsc --project tsconfig.web.json && vite build",
+    "dev:web": "vite",
+    "watch": "pnpm run compile",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
@@ -54,16 +55,28 @@
     "@nestjs/common": "^10.3.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "~20.10.5",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "@vscode/test-cli": "^0.0.4",
     "@vscode/test-electron": "^2.3.8",
+    "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
-    "uglify-js": "^3.17.4"
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "less": "^4.2.0",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "uglify-js": "^3.17.4",
+    "vite": "^5.0.8"
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.35",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
   }
