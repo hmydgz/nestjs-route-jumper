@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { NestCliConfig, ProjectType } from '../types';
-import { Nest } from './app';
+import { EventType, NestCliConfig, ProjectType, ReqMsgSearch, RequestMessage, Res } from '../types';
+import { Nest } from './app/nest';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
 import { getIndexFilePath } from '../utils';
@@ -17,10 +17,10 @@ const ignoreDirsReg = new RegExp(ignoreDirs.map(v => `(${v})`).join('|'), 'g')
 export class ProjectAnalysis {
   projectMap: Map<string, Project> = new Map();
 
+  postMessage?: (message: any) => any
+
   constructor() {
-    vscode.workspace.workspaceFolders?.forEach((workspace) => {
-      this.scanProject(workspace.uri.fsPath)
-    });
+    vscode.workspace.workspaceFolders?.forEach((workspace) => this.scanProject(workspace.uri.fsPath));
   }
 
   async scanProject(filePath: string) {
@@ -36,6 +36,35 @@ export class ProjectAnalysis {
     })
 
     await Promise.all(dirs.map(dir => this.scanProject(dir)))
+  }
+
+  onMessage(e: RequestMessage) {
+    switch (e.type) {
+      case EventType.SEARCH:
+        this.handleProjectSearch(e)
+        break
+    }
+  }
+
+  handleProjectSearch(e: ReqMsgSearch) {
+    const projects: Res.Project[] = []
+    this.projectMap.forEach((v, key) => {
+      const _projects: Res.Project = {
+        dirPath: key,
+        type: v.projectType,
+        apps: [],
+      }
+      v.appMap.forEach((v, appName) => {
+        _projects.apps.push({
+          name: appName,
+          path: v.entryFile,
+          mappings: v.paths?.length ? (v.search(e.data) ?? []).map(({ fn, ...rest }) => rest) : []
+        })
+      })
+      projects.push(_projects)
+    })
+
+    this.postMessage?.({ ...e, data: projects })
   }
 }
 

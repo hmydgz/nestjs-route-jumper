@@ -13,9 +13,13 @@
     color: var(--vscode-input-foreground);
     border: 1px solid var(--vscode-input-border, transparent);
     padding: 3px 0 3px 6px;
+    border-radius: 2px;
 
     &:focus {
-      outline-color: #007fd4;
+      outline-width: 1px;
+      outline-style: solid;
+      outline-offset: -1px;
+      outline-color: var(--vscode-focusBorder);
     }
   }
 }

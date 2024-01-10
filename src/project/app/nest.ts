@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Project } from './index'
+import { Project } from '../index'
 import * as ts from 'typescript'
-import { AST, NestDecorator } from '../utils/ast';
-import { ImportVarInfo } from '../types';
+import { AST, NestDecorator } from '../../utils/ast';
+import { ImportVarInfo } from '../../types';
 import { ControllerOptions } from '@nestjs/common';
-import { joinPath } from '../utils';
+import { joinPath } from '../../utils';
 
 type FilePath = string
 type ModuleName = string
@@ -25,15 +25,15 @@ export namespace Nest {
     name: string
   }
 
-  type AppPath = (Omit<NestDecorator.RequsetMapping.Mapping, 'path' | 'version'> & {
+  export type AppPath = (Omit<NestDecorator.RequsetMapping.Mapping, 'path' | 'version'> & {
     version?: string
     path: string
     filePath: string
   })
 
   /**
- * Nestjs App
- */
+   * Nestjs App
+   */
   export class App {
     mainFile!: string
     entryFile: string;
@@ -335,6 +335,7 @@ export namespace Nest {
 
     search(_search: string) {
       const search = _search.split('?')[0]
+      if (search === '') return this.paths
       if (this.pathMap.has(search)) return this.pathMap.get(search) ?? []
       return this.paths?.filter(v => v.path.includes(search))
     }

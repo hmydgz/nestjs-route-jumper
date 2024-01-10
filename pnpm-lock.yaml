@@ -14,6 +14,9 @@ dependencies:
   react-dom:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
+  store:
+    specifier: ^2.0.12
+    version: 2.0.12
   tsconfig-paths:
     specifier: ^4.2.0
     version: 4.2.0
@@ -37,6 +40,9 @@ devDependencies:
   '@types/react-dom':
     specifier: ^18.2.17
     version: 18.2.17
+  '@types/store':
+    specifier: ^2.0.5
+    version: 2.0.5
   '@types/vscode':
     specifier: ^1.85.0
     version: 1.85.0
@@ -863,6 +869,10 @@ packages:
 
   /@types/semver@7.5.6:
     resolution: {integrity: sha512-dn1l8LaMea/IjDoHNd9J52uBbInB796CDffS6VdIxvqYCPSG0V0DzHp76GpaWnlhg88uYyPbXCDIowa86ybd5A==}
+    dev: true
+
+  /@types/store@2.0.5:
+    resolution: {integrity: sha512-5NmTKe3GWdOaykzq7no+Ahf6mafJu0oLc9JNhJ3E26+0oFvd6GnksnZQpMXcH526mfG4xDYjFiKzyDL51PzeWQ==}
     dev: true
 
   /@types/vscode@1.85.0:
@@ -2629,6 +2639,10 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /store@2.0.12:
+    resolution: {integrity: sha512-eO9xlzDpXLiMr9W1nQ3Nfp9EzZieIQc10zPPMP5jsVV7bLOziSFFBP0XoDXACEIFtdI+rIz0NwWVA/QVJ8zJtw==}
+    dev: false
 
   /string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}

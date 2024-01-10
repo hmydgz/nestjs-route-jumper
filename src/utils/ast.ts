@@ -1,6 +1,6 @@
 import * as ts from 'typescript'
 import * as fs from 'fs';
-import { ImportVarInfo } from '../types'
+import { ImportVarInfo, Methods } from '../types'
 import { ControllerOptions, ModuleMetadata } from '@nestjs/common'
 
 export namespace AST {
@@ -155,10 +155,8 @@ export namespace NestDecorator {
   export namespace RequsetMapping {
     export const ReqMethodSet = new Set(['Get', 'Post', 'Put', 'Delete', 'Patch', 'All', 'Options', 'Head', 'Search'])
 
-    export type Method = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search'
-
     export type Mapping = {
-      method: Method,
+      method: Methods,
       path: string[],
       version: string[],
       fn: ts.MethodDeclaration
@@ -178,7 +176,7 @@ export namespace NestDecorator {
         Object.entries(decorators).forEach(([key, args]) => {
           if (ReqMethodSet.has(key)) {
             mappings.push({
-              method: key as Method,
+              method: key as Methods,
               path: args.length ? AST.getStringList(args[0]) : [''],
               version,
               fn: member,

@@ -1,23 +1,19 @@
 import './App.less'
 import SearchInput from './components/SearchInput'
+import { useMessage } from './hooks/useMessage'
+import { StoreProvider } from './store'
+import ProjectList from './components/ProjectList'
 
 function App() {
-  return (
-    <div>
-      <SearchInput />
+  useMessage()
 
-      <div className='grid grid-cols-3'>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
-        <div>1</div>
+  return (
+    <StoreProvider>
+      <div className='relative'>
+        <SearchInput />
+        <ProjectList />
       </div>
-    </div>
+    </StoreProvider>
   )
 }
 

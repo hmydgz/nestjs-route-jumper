@@ -1,4 +1,36 @@
-export type RequestMessage = any;
+export enum EventType {
+  SEARCH = 'SEARCH',
+  GET_PROJECTS = 'GET_PROJECTS',
+  GET_PATHS = 'GET_PATHS',
+}
+
+export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search'
+
+export interface BaseReqMessage<T, U = any> { type: T, data: U }
+
+export type ReqMsgSearch = BaseReqMessage<EventType.SEARCH, string>
+
+export type RequestMessage = ReqMsgSearch
+
+export namespace Res {
+  export type Project = {
+    dirPath: string
+    type: ProjectType
+    apps: App[]
+  }
+  export type App = {
+    name: string
+    path: string
+    mappings: SearchResult[]
+  }
+}
+
+export type SearchResult = {
+  path: string
+  method: Methods
+  filePath: string
+  name: string
+}
 
 export enum ProjectType {
   UNKNOW = 'UNKNOW',
@@ -394,3 +426,13 @@ export namespace NestCliConfig {
     type?: string;
   }
 }
+
+export type Key = string | number
+
+export type TupleToUnion<T extends unknown[]> = T[number];
+
+export type BaseActionTuple<T extends Array<[Key, any] | [Key]>> = TupleToUnion<{
+  [K in keyof T]: T[K] extends [Key, any]
+    ? { type: T[K][0], data: T[K][1] }
+    : { type: T[K][0] }
+}>

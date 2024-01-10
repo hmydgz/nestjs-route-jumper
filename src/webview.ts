@@ -25,20 +25,23 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       // Allow scripts in the webview
       enableScripts: true,
-
-      localResourceRoots: [
-        this._extensionUri
-      ]
+      localResourceRoots: [this._extensionUri]
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-
     webviewView.webview.onDidReceiveMessage(data => {
-      console.log('onDidReceiveMessage', data);
+      console.log('onDidReceiveMessage', data)
+      this.projectAnalysis.onMessage(data)
     });
+
+    this.projectAnalysis.postMessage = (message: any) => {
+      console.log('postMessage', message)
+      webviewView.webview.postMessage(message)
+    }
   }
 
   public postMessage(message: any) {
+    console.log('postMessage', message, this._view)
     if (this._view) {
       this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
       this._view.webview.postMessage(message);
@@ -67,9 +70,9 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
         <link href="${codiconsUri}" rel="stylesheet" />
         <link href="${styleUri}" rel="stylesheet" />
 
-        <script>
+        <!-- <script>
           window.process = { env: { NODE_ENV: 'production' } }
-        </script>
+        </script> -->
 
         <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
         <title>Nestjs Route Jumper</title>

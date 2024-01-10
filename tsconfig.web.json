@@ -4,7 +4,7 @@
 		"outDir": "out",
 		"lib": ["ES2020", "DOM", "DOM.Iterable"],
 		"sourceMap": false,
-		"rootDir": "web",
+		"rootDirs": ["web", "src"],
 		"strict": true,
 		/* Bundler mode */
     "moduleResolution": "bundler",
@@ -15,6 +15,6 @@
 		"composite": true,
     "jsx": "react-jsx",
 	},
-	"include": ["web"],
+	"include": ["web", "src"],
 	"references": [{ "path": "./tsconfig.node.json" }]
 }
