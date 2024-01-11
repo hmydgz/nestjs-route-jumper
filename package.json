@@ -12,15 +12,6 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "viewsWelcome": [
-      {
-        "view": "webview",
-        "contents": "[测试按钮](command:git.clone)",
-        "contents_doc": "内容: Markdown 的子集",
-        "when": "false",
-        "when_doc": "什么时候显示的表达式"
-      }
-    ],
     "viewsContainers": {
       "activitybar": [
         {

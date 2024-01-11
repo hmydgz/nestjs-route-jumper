@@ -70,10 +70,6 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
         <link href="${codiconsUri}" rel="stylesheet" />
         <link href="${styleUri}" rel="stylesheet" />
 
-        <!-- <script>
-          window.process = { env: { NODE_ENV: 'production' } }
-        </script> -->
-
         <script nonce="${nonce}" type="module" src="${scriptUri}"></script>
         <title>Nestjs Route Jumper</title>
       </head>
