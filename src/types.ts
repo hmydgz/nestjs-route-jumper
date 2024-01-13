@@ -4,7 +4,7 @@ export enum EventType {
   GET_PATHS = 'GET_PATHS',
 }
 
-export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search'
+export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head'/*  | 'Search' */
 
 export interface BaseReqMessage<T, U = any> { type: T, data: U }
 

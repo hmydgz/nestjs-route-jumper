@@ -1,17 +1,21 @@
 import './App.less'
 import SearchInput from './components/SearchInput'
 import { useMessage } from './hooks/useMessage'
-import { StoreProvider } from './store'
+import { StoreProvider, useStore } from './store'
 import ProjectList from './components/ProjectList'
+import { LineMdLoadingTwotoneLoop } from './components/Icon'
 
 function App() {
   useMessage()
+  const [store] = useStore()
 
   return (
     <StoreProvider>
       <div className='relative'>
         <SearchInput />
-        <ProjectList />
+        { store.loadingSearch
+          ? <span className='text-xl'><LineMdLoadingTwotoneLoop /></span>
+          : <ProjectList /> }
       </div>
     </StoreProvider>
   )
