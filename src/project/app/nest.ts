@@ -264,7 +264,7 @@ export namespace Nest {
             if (decorators.hasOwnProperty('Controller')) {
               const options = NestDecorator.Controller.getArgs(decorators.Controller)
               Object.assign(controller, options)
-              controller.mappings = NestDecorator.RequsetMapping.getMapping(classNode)
+              controller.mappings = NestDecorator.RequsetMapping.getMapping(classNode, ast)
             }
           } break
           default:
@@ -288,7 +288,7 @@ export namespace Nest {
         _module.controllers.forEach(v => {
           const _paths = this.getControllerPath(v)
           _paths.forEach(v => {
-            const key = `${v.filePath}-${v.path}-${v.name}-${v.method}-${v.version}`
+            const key = `${v.filePath}-${v.path}-${v.fnName}-${v.method}-${v.version}`
             if (pathSet.has(key)) return
             pathSet.add(key)
             let prefix = this.globalPrefix || ''
@@ -337,7 +337,18 @@ export namespace Nest {
       const search = _search.split('?')[0]
       if (search === '') return this.paths
       if (this.pathMap.has(search)) return this.pathMap.get(search) ?? []
-      return this.paths?.filter(v => v.path.includes(search))
+      return this.paths?.filter(v => {
+        if (v.path.includes(search)) return true
+        if (search.includes(v.path)) return true
+        if (v.path.includes(':')) {
+          let _regStr = v.path.replace(/\:([^\/\:]+)/g, '([^\/])+')
+          if (_regStr.endsWith('/')) _regStr = _regStr.substring(0, _regStr.length - 1)
+          const reg = new RegExp(_regStr, 'g')
+          return reg.test(search)
+        } else {
+          return false
+        }
+      })
     }
   }
 }

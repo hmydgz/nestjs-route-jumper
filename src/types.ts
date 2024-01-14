@@ -1,7 +1,8 @@
+import * as ts from 'typescript'
+
 export enum EventType {
   SEARCH = 'SEARCH',
-  GET_PROJECTS = 'GET_PROJECTS',
-  GET_PATHS = 'GET_PATHS',
+  JUMP_TO_METHOD = 'JUMP_TO_METHOD',
 }
 
 export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head'/*  | 'Search' */
@@ -9,8 +10,9 @@ export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Opt
 export interface BaseReqMessage<T, U = any> { type: T, data: U }
 
 export type ReqMsgSearch = BaseReqMessage<EventType.SEARCH, string>
+export type ReqMsgJumpToMethod = BaseReqMessage<EventType.JUMP_TO_METHOD, SearchResult>
 
-export type RequestMessage = ReqMsgSearch
+export type RequestMessage = ReqMsgSearch | ReqMsgJumpToMethod
 
 export namespace Res {
   export type Project = {
@@ -29,7 +31,12 @@ export type SearchResult = {
   path: string
   method: Methods
   filePath: string
-  name: string
+  fnName: string
+  className?: string
+  line: {
+    start: ts.LineAndCharacter
+    end: ts.LineAndCharacter
+  }
 }
 
 export enum ProjectType {

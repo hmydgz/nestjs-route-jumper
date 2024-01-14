@@ -5,11 +5,8 @@ import ReqMapping from "./ReqMapping"
 
 const AppList: React.FC<{ apps: Res.App[] }> = ({ apps }) => {
 
-  return (<div className="pl-2">
-    { apps.map(v => v.mappings.length ? <div>
-      <div>{ v.name }</div>
-      <ReqMapping mappings={v.mappings} />
-    </div> : null) }
+  return (<div>
+    { apps.map(v => v.mappings.length ? <ReqMapping appName={v.name} mappings={v.mappings} /> : null) }
   </div>)
 }
 

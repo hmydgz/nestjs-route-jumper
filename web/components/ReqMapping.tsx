@@ -1,6 +1,7 @@
 import { SVGProps } from "react"
-import { Methods, SearchResult } from "../../src/types"
-import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, CodiconGoToFile, TablerHttpPatch, TablerHttpOptions, TablerHttpHead } from './Icon'
+import { EventType, Methods, SearchResult } from "../../src/types"
+import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, CodiconGoToFile, TablerHttpPatch, TablerHttpOptions, TablerHttpHead, CodiconArrowRight } from './Icon'
+import { requset } from "../utils/requset"
 
 const MethodMap: Record<string, (args: SVGProps<SVGSVGElement>) => JSX.Element> = {
   Get: TablerHttpGet,
@@ -24,19 +25,30 @@ const MethodIconColorMap = {
   All: 'rgb(107,221,154)',
 }
 
-const ReqMapping: React.FC<{ mappings: SearchResult[] }> = ({ mappings }) => {
-  return (<div className="grid grid-cols-1 gap-1">
+function handleJumperToMethod(target: SearchResult) {
+  requset({ type: EventType.JUMP_TO_METHOD, data: target })
+}
+
+const ReqMapping: React.FC<{ mappings: SearchResult[], appName: string }> = ({ mappings, appName }) => {
+  return (<div className="grid grid-cols-1 gap-0.5">
     { mappings.map(v => {
       const Icon = MethodMap[v.method] ?? TablerHttpGet
-      return <div className="group rounded hover:bg-black/30 px-2 py-1 transition-all">
+      return <div className="group rounded hover:bg-black/30 px-1 py-0.5" onClick={() => handleJumperToMethod(v)}>
         <div className="flex items-center gap-1">
+          {/* <div className="px-1 py-0.5 border rounded leading-none" style={{ borderColor: 'red', color: 'red', fontSize: '10px' }}>{ appName }</div> */}
           <div className="text-xl" title={v.method}><Icon style={{ color: MethodIconColorMap[v.method] }} /></div>
-          <div className="text-sm">{ v.path }</div>
+          <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden" style={{ color: 'var(--vscode-breadcrumb-foreground)' }}>{ v.path }</div>
         </div>
         <div className="flex items-center gap-1">
           <div className="text-base"><CodiconSymbolMethod style={{ color: 'var(--vscode-symbolIcon-methodForeground)' }} /></div>
-          <div className="text-sm">{ v.name }</div>
-          <div className="ml-auto opacity-0 group-hover:opacity-100"><CodiconGoToFile /></div>
+          <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden">
+            { v.className ? <>
+              <span className="text-#4ec9b0">{ v.className }</span>
+              <span>.</span>
+            </> : null }
+            <span className="text-#dcdcaa">{ v.fnName }</span>
+          </div>
+          <div className="opacity-0 group-hover:opacity-100"><CodiconArrowRight /></div>
         </div>
       </div>
     }) }

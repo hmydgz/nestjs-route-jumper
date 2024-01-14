@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { EventType, NestCliConfig, ProjectType, ReqMsgSearch, RequestMessage, Res } from '../types';
+import { EventType, NestCliConfig, ProjectType, ReqMsgJumpToMethod, ReqMsgSearch, RequestMessage, Res } from '../types';
 import { Nest } from './app/nest';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
@@ -38,15 +38,20 @@ export class ProjectAnalysis {
     await Promise.all(dirs.map(dir => this.scanProject(dir)))
   }
 
-  onMessage(e: RequestMessage) {
+  async onMessage(e: RequestMessage) {
+    let res: any = null
     switch (e.type) {
       case EventType.SEARCH:
-        this.handleProjectSearch(e)
+        res = await this.handleProjectSearch(e)
+        break
+      case EventType.JUMP_TO_METHOD:
+        res = await this.handleJumperToMethod(e)
         break
     }
+    this.postMessage?.({ ...e, data: res ?? 0 })
   }
 
-  handleProjectSearch(e: ReqMsgSearch) {
+  async handleProjectSearch(e: ReqMsgSearch) {
     const projects: Res.Project[] = []
     this.projectMap.forEach((v, key) => {
       const _projects: Res.Project = {
@@ -64,7 +69,20 @@ export class ProjectAnalysis {
       projects.push(_projects)
     })
 
-    this.postMessage?.({ ...e, data: projects })
+    return projects
+  }
+
+  async handleJumperToMethod(e: ReqMsgJumpToMethod) {
+    const { data: { filePath, line } } = e
+    const uri = vscode.Uri.file(filePath)
+    const doc = await vscode.workspace.openTextDocument(uri)
+    await vscode.window.showTextDocument(doc, {
+      selection: new vscode.Range(
+        line.start.line,
+        line.start.character,
+        line.end.line,
+        line.end.character
+      ) })
   }
 }
 
@@ -87,6 +105,13 @@ export class Project {
     this.getProjectType()
     this.scanApp()
     this.updateDependencies()
+    vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
+      this.appMap.forEach(app => {
+        if (app.astMap.has(e.fileName)) {
+          console.log('监听文件变化')
+        }
+      })
+    })
   }
 
   private initPathResolve() {

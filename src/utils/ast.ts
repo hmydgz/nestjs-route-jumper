@@ -160,11 +160,17 @@ export namespace NestDecorator {
       path: string[],
       version: string[],
       fn: ts.MethodDeclaration
-      name: string
+      fnName: string
+      className: string
+      line: {
+        start: ts.LineAndCharacter,
+        end: ts.LineAndCharacter
+      }
     }
 
-    export const getMapping = (classNode: ts.ClassDeclaration) => {
+    export const getMapping = (classNode: ts.ClassDeclaration, ast: ts.SourceFile) => {
       const mappings: Mapping[] = []
+      const className = AST.getIdentifierName(classNode.name!) || ''
       classNode.members.forEach(_member => {
         if (_member.kind !== ts.SyntaxKind.MethodDeclaration) return
         const member = _member as ts.MethodDeclaration
@@ -173,6 +179,10 @@ export namespace NestDecorator {
         if (decorators.hasOwnProperty('Version') && decorators['Version'].length) {
           version = AST.getStringList(decorators['Version'][0])
         }
+        const line = {
+          start: ts.getLineAndCharacterOfPosition(ast, member.name.getStart(ast)),
+          end: ts.getLineAndCharacterOfPosition(ast, member.name.getEnd()),
+        }
         Object.entries(decorators).forEach(([key, args]) => {
           if (ReqMethodSet.has(key)) {
             mappings.push({
@@ -180,7 +190,9 @@ export namespace NestDecorator {
               path: args.length ? AST.getStringList(args[0]) : [''],
               version,
               fn: member,
-              name: AST.getIdentifierName(member.name as ts.Identifier)
+              className,
+              fnName: AST.getIdentifierName(member.name as ts.Identifier),
+              line,
             })
           }
         })

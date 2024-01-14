@@ -11,7 +11,7 @@ function App() {
 
   return (
     <StoreProvider>
-      <div className='relative'>
+      <div className='relative pb-2'>
         <SearchInput />
         { store.loadingSearch
           ? <span className='text-xl'><LineMdLoadingTwotoneLoop /></span>

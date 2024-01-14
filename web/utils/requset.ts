@@ -1,5 +1,5 @@
 import { sendMessage } from "."
-import { RequestMessage } from "../../out/types"
+import { RequestMessage } from "../../src/types"
 
 const reqMap = new Map<number, (value: any) => any>()
 
