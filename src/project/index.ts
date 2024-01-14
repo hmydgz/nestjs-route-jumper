@@ -5,7 +5,7 @@ import { EventType, NestCliConfig, ProjectType, ReqMsgJumpToMethod, ReqMsgSearch
 import { Nest } from './app/nest';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
-import { getIndexFilePath } from '../utils';
+import { debounce, getIndexFilePath } from '../utils';
 
 // 忽略的目录
 const ignoreDirs = ['node_modules', '.git', '.github', '.vscode', '.idea']
@@ -40,14 +40,16 @@ export class ProjectAnalysis {
 
   async onMessage(e: RequestMessage) {
     let res: any = null
-    switch (e.type) {
-      case EventType.SEARCH:
-        res = await this.handleProjectSearch(e)
-        break
-      case EventType.JUMP_TO_METHOD:
-        res = await this.handleJumperToMethod(e)
-        break
-    }
+    try {
+      switch (e.type) {
+        case EventType.SEARCH:
+          res = await this.handleProjectSearch(e)
+          break
+        case EventType.JUMP_TO_METHOD:
+          res = await this.handleJumperToMethod(e)
+          break
+      }
+    } catch (error) {}
     this.postMessage?.({ ...e, data: res ?? 0 })
   }
 
@@ -93,6 +95,7 @@ export class Project {
   projectType: ProjectType = ProjectType.UNKNOW
   appMap: Map<string, Nest.App> = new Map()
   private dependencies = new Set<string>()
+  private appConfig = new Map<string, any>()
 
   /**
    * 别名路径缓存
@@ -105,10 +108,14 @@ export class Project {
     this.getProjectType()
     this.scanApp()
     this.updateDependencies()
+    this.watchSaveFile()
+  }
+
+  private watchSaveFile() {
     vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
-      this.appMap.forEach(app => {
+      this.appMap.forEach((app, appName) => {
         if (app.astMap.has(e.fileName)) {
-          console.log('监听文件变化')
+          this.updateApp(appName)
         }
       })
     })
@@ -193,21 +200,49 @@ export class Project {
   scanNestjsApp() {
     const configPath = path.join(this.dirPath, 'nest-cli.json')
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as NestCliConfig.Coordinate
+
+    const createApp = (appName: string, sourceRoot: string, entryFile: string) => {
+      this.appConfig.set(appName, {
+        sourceRoot: sourceRoot,
+        entryFile: entryFile,
+        project: this
+      })
+      this.appMap.set(appName, new Nest.App(this.appConfig.get(appName)))
+    }
+
     config.projects && Object.entries(config.projects).forEach(([appName, project]) => {
       if (!project.sourceRoot) return
-      this.appMap.set(appName, new Nest.App({
-        sourceRoot: path.resolve(configPath, '../', project.sourceRoot),
-        entryFile: project.entryFile as string,
-        project: this
-      }))
+      createApp(
+        appName,
+        path.resolve(configPath, '../', project.sourceRoot),
+        project.entryFile as string
+      )
     })
 
     if (!config.monorepo) {
-      this.appMap.set('main', new Nest.App({
-        sourceRoot: path.resolve(configPath, '../', config.sourceRoot || 'src'),
-        entryFile: config.entryFile ||'main',
-        project: this
-      }))
+      createApp(
+        'main',
+        path.resolve(configPath, '../', config.sourceRoot || 'src'),
+        config.entryFile ||'main'
+      )
     }
+  }
+
+  private _updateAppTimerMap = new Map<string, () => void>()
+  private updateApp(appName: string) {
+    if (!this._updateAppTimerMap.has(appName)) {
+      this._updateAppTimerMap.set(appName, debounce(() => {
+        switch (this.projectType) {
+          case ProjectType.NESTJS: {
+            const config = this.appConfig.get(appName)
+            if (config) {
+              this.appMap.set(appName, new Nest.App(config))
+            }
+          } break
+        }
+      }, 500))
+    }
+
+    this._updateAppTimerMap.get(appName)?.()
   }
 }
