@@ -1,9 +1,10 @@
 {
   "name": "nestjs-route-jumper",
-  "displayName": "nestjs-route-jumper",
-  "description": "test",
-  "version": "0.0.1",
+  "displayName": "Nestjs Route Jumper",
+  "description": "A tool developed for nestjs to search for controllers through access paths",
+  "version": "0.0.2",
   "publisher": "hmydgz",
+  "icon": "resources/logo.png",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -34,7 +35,10 @@
           "name": "Nestjs route jumper"
         }
       ]
-    }
+    },
+    "languages": [
+      { "id": "nestjs" }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "pnpm run compile",
