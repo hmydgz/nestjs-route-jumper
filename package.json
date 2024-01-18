@@ -41,13 +41,13 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "pnpm run compile",
+    "vscode:prepublish": "npm run compile",
     "compile": "npm run compile-src && npm run compile-web",
     "compile-src": "tsc -p ./src",
     "compile-web": "tsc --project tsconfig.web.json && vite build",
     "dev:web": "vite",
-    "watch": "pnpm run compile",
-    "pretest": "pnpm run compile && pnpm run lint",
+    "watch": "npm run compile",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
