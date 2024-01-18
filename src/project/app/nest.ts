@@ -344,6 +344,7 @@ export namespace Nest {
           let _regStr = v.path.replace(/\:([^\/\:]+)/g, '([^\/])+')
           if (_regStr.endsWith('/')) _regStr = _regStr.substring(0, _regStr.length - 1)
           const reg = new RegExp(_regStr, 'g')
+          // console.log(reg)
           return reg.test(search)
         } else {
           return false
