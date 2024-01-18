@@ -6,6 +6,7 @@ import { Nest } from './app/nest';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
 import { debounce, getIndexFilePath } from '../utils';
+import { postMessage } from '../utils/postMessage';
 
 // 忽略的目录
 const ignoreDirs = ['node_modules', '.git', '.github', '.vscode', '.idea']
@@ -16,8 +17,6 @@ const ignoreDirsReg = new RegExp(ignoreDirs.map(v => `(${v})`).join('|'), 'g')
  */
 export class ProjectAnalysis {
   projectMap: Map<string, Project> = new Map();
-
-  postMessage?: (message: any) => any
 
   constructor() {
     vscode.workspace.workspaceFolders?.forEach((workspace) => this.scanProject(workspace.uri.fsPath));
@@ -50,7 +49,7 @@ export class ProjectAnalysis {
           break
       }
     } catch (error) {}
-    this.postMessage?.({ ...e, data: res ?? 0 })
+    postMessage({ ...e, data: res ?? 0 })
   }
 
   async handleProjectSearch(e: ReqMsgSearch) {
@@ -96,7 +95,6 @@ export class Project {
   appMap: Map<string, Nest.App> = new Map()
   private dependencies = new Set<string>()
   private appConfig = new Map<string, any>()
-
   /**
    * 别名路径缓存
    */
@@ -237,6 +235,7 @@ export class Project {
             const config = this.appConfig.get(appName)
             if (config) {
               this.appMap.set(appName, new Nest.App(config))
+              postMessage({ type: EventType.WEIVIEW_REFRESH })
             }
           } break
         }

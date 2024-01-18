@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import { getNonce } from './utils';
 import { ProjectAnalysis } from './project';
+import { setPostMessage } from './utils/postMessage';
 
 export class SilderWebviewProvider implements vscode.WebviewViewProvider {
 
   public static readonly viewType = 'webview';
 
-  private _view?: vscode.WebviewView;
+  // private _view?: vscode.WebviewView;
   projectAnalysis: ProjectAnalysis;
 
   constructor(
@@ -20,7 +21,7 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ) {
-    this._view = webviewView;
+    // this._view = webviewView;
 
     webviewView.webview.options = {
       // Allow scripts in the webview
@@ -30,23 +31,19 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
     webviewView.webview.onDidReceiveMessage(data => {
-      console.log('onDidReceiveMessage', data)
       this.projectAnalysis.onMessage(data)
     });
 
-    this.projectAnalysis.postMessage = (message: any) => {
-      console.log('postMessage', message)
-      webviewView.webview.postMessage(message)
-    }
+    setPostMessage((message: any) => webviewView.webview.postMessage(message))
   }
 
-  public postMessage(message: any) {
-    console.log('postMessage', message, this._view)
-    if (this._view) {
-      this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-      this._view.webview.postMessage(message);
-    }
-  }
+  // public postMessage(message: any) {
+  //   console.log('postMessage', message, this._view)
+  //   if (this._view) {
+  //     this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
+  //     this._view.webview.postMessage(message);
+  //   }
+  // }
 
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'out.js'));

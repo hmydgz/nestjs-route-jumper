@@ -4,6 +4,7 @@ import { EventType, Res } from '../../src/types'
 import { useStore } from "../store"
 import { StoreActionType } from "../types"
 import { sendMessage } from "../utils"
+import { useMessage } from "../hooks/useMessage"
 
 const SearchInput: React.FC = () => {
   const [store, dispatch] = useStore()
@@ -27,6 +28,14 @@ const SearchInput: React.FC = () => {
   }
 
   useEffect(() => { submitSearch() }, [])
+
+  useMessage(({ type }) => {
+    switch (type) {
+      case EventType.WEIVIEW_REFRESH:
+        submitSearch()
+        break
+    }
+  })
 
   return <div className="search-bar sticky top-0 pb-2 shadow">
     <input

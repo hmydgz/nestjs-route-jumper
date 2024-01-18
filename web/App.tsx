@@ -1,12 +1,10 @@
 import './App.less'
 import SearchInput from './components/SearchInput'
-import { useMessage } from './hooks/useMessage'
 import { StoreProvider, useStore } from './store'
 import ProjectList from './components/ProjectList'
 import { LineMdLoadingTwotoneLoop } from './components/Icon'
 
 function App() {
-  useMessage()
   const [store] = useStore()
 
   return (
