@@ -26,14 +26,14 @@ jobs:
       - name: 安装 vsce
         run: npm install -g vsce
 
-      - name: 编译
-        run: vsce package -o dist.vsix
-
-      - name: 上传
-        uses: actions/upload-artifact@v3
-        with:
-          name: code-coverage-report
-          path: dist.vsix
-
       # - name: 编译
-      #   run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
+      #   run: vsce package -o dist.vsix
+
+      # - name: 上传
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: code-coverage-report
+      #     path: dist.vsix
+
+      - name: 编译上传
+        run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
