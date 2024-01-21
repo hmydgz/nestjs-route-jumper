@@ -83,7 +83,8 @@ export class ProjectAnalysis {
         line.start.character,
         line.end.line,
         line.end.character
-      ) })
+      )
+    })
   }
 }
 
