@@ -1,9 +1,10 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { useStore } from "../store"
 import { StoreActionType } from "../types"
 
 const SearchInput: React.FC = () => {
   const [store, dispatch] = useStore()
+  const [value, setValue] = useState('')
 
   const handleSearch = async(e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return
@@ -13,6 +14,7 @@ const SearchInput: React.FC = () => {
   const submitSearch = async () => {
     try {
       dispatch({ type: StoreActionType.SET_SEARCH_LOADING, data: true })
+      dispatch({ type: StoreActionType.SET_SEARCH_STR, data: value })
       dispatch({ type: StoreActionType.SEARCH })
     } catch (error) {
     } finally {
@@ -24,9 +26,9 @@ const SearchInput: React.FC = () => {
 
   return <div className="search-bar sticky top-0 pb-2 shadow">
     <input
-      value={store.searchStr}
-      placeholder="请输入访问路径"
-      onChange={e => dispatch({ type: StoreActionType.SET_SEARCH_STR, data: e.target.value })}
+      value={value}
+      placeholder="Search"
+      onChange={e => setValue(e.target.value)}
       onKeyDown={handleSearch}
     />
   </div>

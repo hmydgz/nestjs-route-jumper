@@ -43,6 +43,7 @@ export type SearchResult = {
     start: ts.LineAndCharacter
     end: ts.LineAndCharacter
   }
+  match?: { text: string, keyword: boolean }[]
 }
 
 export enum ProjectType {

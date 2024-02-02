@@ -1,4 +1,4 @@
-import { SVGProps } from "react"
+import { FC, SVGProps } from "react"
 import { EventType, Methods, SearchResult } from "../../src/types"
 import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, CodiconGoToFile, TablerHttpPatch, TablerHttpOptions, TablerHttpHead, CodiconArrowRight } from './Icon'
 import { requset } from "../utils/requset"
@@ -29,6 +29,12 @@ function handleJumperToMethod(target: SearchResult) {
   requset({ type: EventType.JUMP_TO_METHOD, data: target })
 }
 
+const Path: FC<{ data: SearchResult }> = ({ data }) => {
+  return <>{ data.match ? data.match.map((v, i) => (
+    <span style={{ background: v.keyword ? 'var(--vscode-editor-findMatchHighlightBackground)' : '' }}>{ v.text }</span>
+  )) : data.path }</>
+}
+
 const ReqMapping: React.FC<{ mappings: SearchResult[] }> = ({ mappings }) => {
   return (<div className="grid grid-cols-1">
     { mappings.map(v => {
@@ -36,7 +42,9 @@ const ReqMapping: React.FC<{ mappings: SearchResult[] }> = ({ mappings }) => {
       return <div className="group rounded hover:bg-black/30 px-1 py-0.5" onClick={() => handleJumperToMethod(v)}>
         <div className="flex items-center gap-1">
           <div className="text-xl" title={v.method}><Icon style={{ color: MethodIconColorMap[v.method] }} /></div>
-          <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden" style={{ color: 'var(--vscode-breadcrumb-foreground)' }}>{ v.path }</div>
+          <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden" style={{ color: 'var(--vscode-breadcrumb-foreground)' }}>
+            <Path data={v} />
+          </div>
         </div>
         <div className="flex items-center gap-1">
           <div className="text-base"><CodiconSymbolMethod style={{ color: 'var(--vscode-symbolIcon-methodForeground)' }} /></div>

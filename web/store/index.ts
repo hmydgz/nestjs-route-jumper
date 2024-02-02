@@ -57,45 +57,87 @@ function search(value: string, projects: Res.Project[]): Res.Project[] {
         mappings: [],
       }
       app.mappings.forEach(v => {
-        (['', '/'].includes(value) || isMatch(v.path, value)) && _app.mappings.push(v)
+        if (['', '/'].includes(value)) return _app.mappings.push(v)
+        const [result, match] = isMatch(v.path, value)
+        if (result) _app.mappings.push({ ...v, match })
       })
       _app.mappings.length && _projects.apps.push(_app)
     })
-
     _projects.apps.length && list.push(_projects)
   })
 
   return list
 }
 
-function isMatch(_path: string, value: string): boolean {
+function isMatch(_path: string, value: string): [boolean, { text: string, keyword: boolean }[]] {
   const _value = value.split('?')[0]
   if (_path.includes(':')) {
-    // 直接当成参数
-    if (!_value.includes('/')) return true
+    // 感觉还是默认不开纯参数搜索好点
+    // // 直接当成参数
+    // if (!_value.includes('/')) return true
     const _paths = _path.split('/').filter(v => v)
     const _values = _value.split('/').filter(v => v)
     // 能匹配到的起始位置
-    const startItemIndex = _paths.findIndex(v => {
-      if (v.includes(':')) return true
-      return v.endsWith(_values[0])
-    })
+    let startItemIndex = -1
+    let startItemIsParams = false
+    for (let index = 0; index < _paths.length; index++) {
+      const element = _paths[index];
+      if (element.endsWith(_values[0])) {
+        startItemIndex = index
+        break
+      } else if (element.includes(':')) {
+        startItemIndex = index
+        startItemIsParams = true
+        break
+      }
+    }
+
     // 超长 /api/redis/:xxx 无法匹配 redis/123/123 这种情况
-    if ((_paths.length - startItemIndex) < _values.length) return false
+    if ((_paths.length - startItemIndex) < _values.length) return [false, []]
+
+    let startMatchStr = startItemIsParams ? _paths[startItemIndex] : _values[0]
+
     for (let index = 1; index < _values.length; index++) {
       const __path = _paths[index + startItemIndex]
       const __value = _values[index]
-      // 参数部分，跳过
-      if (__path.includes(':')) continue
       // 末尾了就只从前面匹配
-      if (index === _values.length - 1 && __path.startsWith(__value)) continue
+      if (index === _values.length - 1) {
+        if (__path.includes(':')) {
+          startMatchStr += `/${__path}`
+          continue
+        } else if (__path.startsWith(__value)) {
+          startMatchStr += `/${__value}`
+          continue
+        }
+      }
+      // 参数部分，跳过
+      if (__path.includes(':')) {
+        startMatchStr += `/${__path}`
+        continue
+      }
       // 中间的需要完全匹配
-      if (__path !== __value) return false
+      if (__path !== __value) return [false, []]
+      startMatchStr += `/${__path}`
     }
-    return true
+    const match = createMatch(startMatchStr, _path)
+    return [true, match]
   } else {
-    return _path.includes(_value)
+    return _path.includes(_value) ? [true, createMatch(_value, _path)] : [false, []]
   }
+}
+
+function createMatch(keyword: string, _path: string) {
+  const reg = new RegExp(keyword, 'g')
+  const arr = _path.split(reg)
+  const matchArr = _path.match(reg)
+  const result = []
+  for (let i = 0; i < arr.length; i++) {
+    result.push({ text: arr[i], keyword: false })
+    if (matchArr && matchArr[i]) {
+      result.push({ text: matchArr[i], keyword: true })
+    }
+  }
+  return result
 }
 
 export const [StoreProvider, useStore] = createCustomStore({ initalState, reducer })
