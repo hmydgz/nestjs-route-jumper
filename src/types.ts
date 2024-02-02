@@ -4,6 +4,8 @@ export enum EventType {
   SEARCH = 'SEARCH',
   JUMP_TO_METHOD = 'JUMP_TO_METHOD',
   WEIVIEW_REFRESH = 'WEIVIEW_REFRESH',
+  GET_BASE_PATH = 'GET_BASE_PATH',
+  GET_PROJECTS = 'GET_PROJECTS',
 }
 
 export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head'/*  | 'Search' */
@@ -12,9 +14,11 @@ export type BaseReqMessage<T, U = undefined> = U extends undefined ? { type: T, 
 
 export type ReqMsgSearch = BaseReqMessage<EventType.SEARCH, string>
 export type ReqMsgJumpToMethod = BaseReqMessage<EventType.JUMP_TO_METHOD, SearchResult>
+export type ReqMsgGetBasePath = BaseReqMessage<EventType.GET_BASE_PATH>
+export type ReqMsgGetProject = BaseReqMessage<EventType.GET_PROJECTS>
 export type PushMsgRefresh = BaseReqMessage<EventType.WEIVIEW_REFRESH>
 
-export type RequestMessage = ReqMsgSearch | ReqMsgJumpToMethod | PushMsgRefresh
+export type RequestMessage = ReqMsgSearch | ReqMsgJumpToMethod | PushMsgRefresh | ReqMsgGetBasePath | ReqMsgGetProject
 
 export namespace Res {
   export type Project = {
