@@ -37,7 +37,9 @@
       ]
     },
     "languages": [
-      { "id": "nestjs" }
+      {
+        "id": "nestjs"
+      }
     ]
   },
   "scripts": {
@@ -76,6 +78,7 @@
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.35",
+    "clsx": "^2.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "store": "^2.0.12",

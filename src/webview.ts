@@ -37,14 +37,6 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
     setPostMessage((message: any) => webviewView.webview.postMessage(message))
   }
 
-  // public postMessage(message: any) {
-  //   console.log('postMessage', message, this._view)
-  //   if (this._view) {
-  //     this._view.show?.(true); // `show` is not implemented in 1.49 but is for 1.50 insiders
-  //     this._view.webview.postMessage(message);
-  //   }
-  // }
-
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'out.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'style.css'));

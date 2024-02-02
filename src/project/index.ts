@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { EventType, NestCliConfig, ProjectType, ReqMsgJumpToMethod, ReqMsgSearch, RequestMessage, Res } from '../types';
+import { EventType, NestCliConfig, ProjectType, ReqMsgJumpToMethod, RequestMessage, Res } from '../types';
 import { Nest } from './app/nest';
 import * as ts from 'typescript'
 import { createMatchPath, MatchPath } from 'tsconfig-paths'
@@ -10,7 +10,8 @@ import { postMessage } from '../utils/postMessage';
 
 // 忽略的目录
 const ignoreDirs = ['node_modules', '.git', '.github', '.vscode', '.idea']
-const ignoreDirsReg = new RegExp(ignoreDirs.map(v => `(${v})`).join('|'), 'g')
+const ignoreDirsSet = new Set([...ignoreDirs])
+const ignoreDirsReg = new RegExp(`(${ignoreDirs.join('|')})`, 'g')
 
 /**
  * 项目分析
@@ -26,8 +27,10 @@ export class ProjectAnalysis {
     const dirs: string[] = []
     const links = await fs.promises.readdir(filePath, { withFileTypes: true })
     links.forEach(link => {
+      if (ignoreDirsSet.has(link.name)) return
       const _path = path.join(filePath, link.name)
-      if (link.isDirectory() && !(ignoreDirsReg.test(_path))) {
+      const __path = _path.split(path.sep).join('/')
+      if (link.isDirectory() && !(ignoreDirsReg.test(__path))) {
         dirs.push(_path)
       } else if (link.name === 'package.json') {
         this.projectMap.set(filePath, new Project(filePath))
@@ -41,18 +44,21 @@ export class ProjectAnalysis {
     let res: any = null
     try {
       switch (e.type) {
-        case EventType.SEARCH:
-          res = await this.handleProjectSearch(e)
-          break
         case EventType.JUMP_TO_METHOD:
           res = await this.handleJumperToMethod(e)
+          break
+        case EventType.GET_BASE_PATH:
+          res = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+          break
+        case EventType.GET_PROJECTS:
+          res = this.handleGetProject()
           break
       }
     } catch (error) {}
     postMessage({ ...e, data: res ?? 0 })
   }
 
-  async handleProjectSearch(e: ReqMsgSearch) {
+  handleGetProject() {
     const projects: Res.Project[] = []
     this.projectMap.forEach((v, key) => {
       const _projects: Res.Project = {
@@ -64,12 +70,11 @@ export class ProjectAnalysis {
         _projects.apps.push({
           name: appName,
           path: v.entryFile,
-          mappings: v.paths?.length ? (v.search(e.data) ?? []).map(({ fn, ...rest }) => rest) : []
+          mappings: v.paths?.length ? (v.paths).map(({ fn, ...rest }) => rest) : []
         })
       })
       projects.push(_projects)
     })
-
     return projects
   }
 

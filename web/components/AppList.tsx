@@ -1,12 +1,18 @@
-
-import { useStore } from "../store"
+import { useMemo } from "react"
 import { Res } from "../../src/types"
 import ReqMapping from "./ReqMapping"
+import { CodiconSymbolClass } from './Icon'
 
 const AppList: React.FC<{ apps: Res.App[] }> = ({ apps }) => {
-
+  const renderApps = useMemo(() => apps.filter(v => v.mappings.length), [apps])
   return (<div>
-    { apps.map(v => v.mappings.length ? <ReqMapping appName={v.name} mappings={v.mappings} /> : null) }
+    { renderApps.map(v => <>
+      { v.name ? <div className="flex items-center py-1">
+        <CodiconSymbolClass className="text-lg" />
+        <span className="pl-1">{ v.name }</span>
+      </div> : null }
+      <ReqMapping mappings={v.mappings} />
+    </>) }
   </div>)
 }
 

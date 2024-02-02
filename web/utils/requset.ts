@@ -13,7 +13,7 @@ export function requset<T extends any>(req: RequestMessage) {
     sendMessage({ ...req, msgId: _msgId })
   }).finally(() => {
     reqMap.delete(_msgId)
-    sendMessage({ msg: `${_msgId} 完成` })
+    console.log(`req ${_msgId} 完成`)
   })
 }
 

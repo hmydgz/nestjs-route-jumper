@@ -1,7 +1,6 @@
 const VSCODE_API = acquireVsCodeApi();
 
-console.log = (...args) => sendMessage({ type: 'web-log', msg: args });
-
 export function sendMessage(...message: any[]) {
+  console.log('sendMessage', ...message)
   VSCODE_API.postMessage(...message);
 }

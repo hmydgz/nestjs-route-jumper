@@ -332,24 +332,5 @@ export namespace Nest {
 
       return paths
     }
-
-    search(_search: string) {
-      const search = _search.split('?')[0]
-      if (search === '') return this.paths
-      if (this.pathMap.has(search)) return this.pathMap.get(search) ?? []
-      return this.paths?.filter(v => {
-        if (v.path.includes(search)) return true
-        if (search.includes(v.path)) return true
-        if (v.path.includes(':')) {
-          let _regStr = v.path.replace(/\:([^\/\:]+)/g, '([^\/])+')
-          if (_regStr.endsWith('/')) _regStr = _regStr.substring(0, _regStr.length - 1)
-          const reg = new RegExp(_regStr, 'g')
-          // console.log(reg)
-          return reg.test(search)
-        } else {
-          return false
-        }
-      })
-    }
   }
 }

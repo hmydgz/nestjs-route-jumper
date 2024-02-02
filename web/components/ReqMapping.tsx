@@ -29,13 +29,12 @@ function handleJumperToMethod(target: SearchResult) {
   requset({ type: EventType.JUMP_TO_METHOD, data: target })
 }
 
-const ReqMapping: React.FC<{ mappings: SearchResult[], appName: string }> = ({ mappings, appName }) => {
-  return (<div className="grid grid-cols-1 gap-0.5">
+const ReqMapping: React.FC<{ mappings: SearchResult[] }> = ({ mappings }) => {
+  return (<div className="grid grid-cols-1">
     { mappings.map(v => {
       const Icon = MethodMap[v.method] ?? TablerHttpGet
       return <div className="group rounded hover:bg-black/30 px-1 py-0.5" onClick={() => handleJumperToMethod(v)}>
         <div className="flex items-center gap-1">
-          {/* <div className="px-1 py-0.5 border rounded leading-none" style={{ borderColor: 'red', color: 'red', fontSize: '10px' }}>{ appName }</div> */}
           <div className="text-xl" title={v.method}><Icon style={{ color: MethodIconColorMap[v.method] }} /></div>
           <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden" style={{ color: 'var(--vscode-breadcrumb-foreground)' }}>{ v.path }</div>
         </div>
