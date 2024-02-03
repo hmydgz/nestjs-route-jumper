@@ -44,6 +44,10 @@ export type SearchResult = {
     end: ts.LineAndCharacter
   }
   match?: { text: string, keyword: boolean }[]
+  /**
+   * 匹配权值
+   */
+  weight?: number
 }
 
 export enum ProjectType {

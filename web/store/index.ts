@@ -58,9 +58,10 @@ function search(value: string, projects: Res.Project[]): Res.Project[] {
       }
       app.mappings.forEach(v => {
         if (['', '/'].includes(value)) return _app.mappings.push(v)
-        const [result, match] = isMatch(v.path, value)
-        if (result) _app.mappings.push({ ...v, match })
+        const [result, match, weight] = isMatch(v.path, value)
+        if (result) _app.mappings.push({ ...v, match, weight })
       })
+      _app.mappings.sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
       _app.mappings.length && _projects.apps.push(_app)
     })
     _projects.apps.length && list.push(_projects)
@@ -69,7 +70,7 @@ function search(value: string, projects: Res.Project[]): Res.Project[] {
   return list
 }
 
-function isMatch(_path: string, value: string): [boolean, { text: string, keyword: boolean }[]] {
+function isMatch(_path: string, value: string): [boolean, { text: string, keyword: boolean }[], number] {
   const _value = value.split('?')[0]
   if (_path.includes(':')) {
     // 感觉还是默认不开纯参数搜索好点
@@ -93,9 +94,10 @@ function isMatch(_path: string, value: string): [boolean, { text: string, keywor
     }
 
     // 超长 /api/redis/:xxx 无法匹配 redis/123/123 这种情况
-    if ((_paths.length - startItemIndex) < _values.length) return [false, []]
+    if ((_paths.length - startItemIndex) < _values.length) return [false, [], 0]
 
     let startMatchStr = startItemIsParams ? _paths[startItemIndex] : _values[0]
+    let matchWeight = 0
 
     for (let index = 1; index < _values.length; index++) {
       const __path = _paths[index + startItemIndex]
@@ -104,25 +106,29 @@ function isMatch(_path: string, value: string): [boolean, { text: string, keywor
       if (index === _values.length - 1) {
         if (__path.includes(':')) {
           startMatchStr += `/${__path}`
+          matchWeight += 0.5
           continue
         } else if (__path.startsWith(__value)) {
           startMatchStr += `/${__value}`
+          matchWeight += 1
           continue
         }
       }
       // 参数部分，跳过
       if (__path.includes(':')) {
         startMatchStr += `/${__path}`
+        matchWeight += 0.5
         continue
       }
       // 中间的需要完全匹配
-      if (__path !== __value) return [false, []]
+      if (__path !== __value) return [false, [], 0]
       startMatchStr += `/${__path}`
+      matchWeight += 1
     }
     const match = createMatch(startMatchStr, _path)
-    return [true, match]
+    return [true, match, matchWeight / _values.length]
   } else {
-    return _path.includes(_value) ? [true, createMatch(_value, _path)] : [false, []]
+    return _path.includes(_value) ? [true, createMatch(_value, _path), 1] : [false, [], 0]
   }
 }
 
