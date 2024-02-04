@@ -73,9 +73,6 @@ function search(value: string, projects: Res.Project[]): Res.Project[] {
 function isMatch(_path: string, value: string): [boolean, { text: string, keyword: boolean }[], number] {
   const _value = value.split('?')[0]
   if (_path.includes(':')) {
-    // 感觉还是默认不开纯参数搜索好点
-    // // 直接当成参数
-    // if (!_value.includes('/')) return true
     const _paths = _path.split('/').filter(v => v)
     const _values = _value.split('/').filter(v => v)
     // 能匹配到的起始位置

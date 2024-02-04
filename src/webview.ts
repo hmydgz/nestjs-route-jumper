@@ -40,8 +40,6 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
   private _getHtmlForWebview(webview: vscode.Webview) {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'out.js'));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'style.css'));
-    const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
-
     // Use a nonce to only allow a specific script to be run.
     const nonce = getNonce();
 
@@ -56,7 +54,6 @@ export class SilderWebviewProvider implements vscode.WebviewViewProvider {
         -->
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link href="${codiconsUri}" rel="stylesheet" />
         <link href="${styleUri}" rel="stylesheet" />
 
         <script nonce="${nonce}" type="module" src="${scriptUri}"></script>

@@ -12,6 +12,10 @@
 
 通过侧边栏的 Nest 图标打开，可在上方输入框中输入接口访问路径，回车搜索
 
+## 说明
+
+目前支持查询使用 `@nestjs/common` 导出的装饰器显式声明的路由，和 [Router module](https://docs.nestjs.com/recipes/router-module)，自定义装饰器与第三方包暂不支持
+
 ## Visual Studio Marketplace
 
 此扩展可在 Visual Studio Code 的 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=hmydgz.nestjs-route-jumper) 上找到

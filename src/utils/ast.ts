@@ -19,6 +19,21 @@ export namespace AST {
     return node.escapedText as string
   }
 
+  export function getObj(node: ts.ObjectLiteralExpression) {
+    const obj: Record<string, ts.Node> = {}
+    node.properties.forEach(v => {
+      const key = getIdentifierName(v.name as ts.Identifier)
+      const value = (v as any).initializer as unknown as ts.Node
+      obj[key] = value
+    })
+
+    return obj
+  }
+
+  export function getStr(node: ts.StringLiteral) {
+    return node.text
+  }
+
   /**
    * 获取 import 的变量信息
    */

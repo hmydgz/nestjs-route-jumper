@@ -186,7 +186,8 @@ export namespace Nest {
     findModule(_moduleInfo: ImportVarInfo, _prefix?: string) {
       if (this.moduleMap.has(_moduleInfo.path)) {
         const cache = this.moduleMap.get(_moduleInfo.path)?.[_moduleInfo.name || 'DefaultExportModule'] as Module
-        if (cache) return cache
+        // 读缓存时需要修改前缀，所以需要创建新对象
+        if (cache) return { ...cache, prefixPath: _prefix ?? '' }
       }
 
       const ast = this.getAST(_moduleInfo.path)
@@ -202,12 +203,55 @@ export namespace Nest {
       const importVarMap = this.importVarMap.get(_moduleInfo.path)!
       const findImportVar = (elements: ts.NodeArray<ts.Expression>, list: ImportVarInfo[]) => {
         elements?.forEach(v => {
-          const name = AST.getIdentifierName(v as ts.Identifier)
-          if (importVarMap[name]) {
-            const _path = this.project.pathResolver(_moduleInfo.path, importVarMap[name].path)
-            _path && list.push(Object.assign({}, importVarMap[name], { path: _path }))
+          switch (v.kind) {
+            case ts.SyntaxKind.Identifier: {
+              const name = AST.getIdentifierName(v as ts.Identifier)
+              if (importVarMap[name]) {
+                const _path = this.project.pathResolver(_moduleInfo.path, importVarMap[name].path)
+                _path && list.push(Object.assign({}, importVarMap[name], { path: _path }))
+              }
+            } break
+            case ts.SyntaxKind.CallExpression: {
+              const node = v as ts.CallExpression
+              if (node.expression.getText(ast).replace(/(\')|(\")/g, '') === 'RouterModule.register') {
+                const RouterModule = importVarMap.RouterModule
+                if (!RouterModule.isDefault && RouterModule.path === '@nestjs/core') {
+                  node.arguments.length === 1 && traverseRouters(node.arguments[0], _prefix ?? '')
+                }
+              }
+            } break
           }
         })
+      }
+
+      const traverseRouters = (routeNode: ts.Node, __prefix: string) => {
+        if (routeNode.kind === ts.SyntaxKind.ArrayLiteralExpression) {
+          const arr = routeNode as ts.ArrayLiteralExpression
+          arr.elements.forEach(_node => {
+            if (_node.kind === ts.SyntaxKind.ObjectLiteralExpression) {
+              const obj = AST.getObj(_node as ts.ObjectLiteralExpression)
+              const _path = obj?.path.kind === ts.SyntaxKind.StringLiteral ? AST.getStr(obj.path as ts.StringLiteral) : ''
+              const prefix = _path ? joinPath(__prefix, _path) : __prefix
+              if (obj?.module?.kind === ts.SyntaxKind.Identifier) {
+                const name = AST.getIdentifierName(obj.module as ts.Identifier)
+                const _module = importVarMap[name]
+                if (_module) {
+                  const _filePath = this.project.pathResolver(_moduleInfo.path, _module.path)
+                  module.importModules.push(this.findModule(Object.assign({}, _module, { path: _filePath }), prefix))
+                }
+              } else if (obj.children) {
+                traverseRouters(obj.children, _path ? joinPath(__prefix, _path) : __prefix)
+              }
+            } else if (_node.kind === ts.SyntaxKind.Identifier) {
+              const name = AST.getIdentifierName(_node as ts.Identifier)
+              const _module = importVarMap[name]
+              if (_module) {
+                const _filePath = this.project.pathResolver(_moduleInfo.path, _module.path)
+                module.importModules.push(this.findModule(Object.assign({}, _module, { path: _filePath }), __prefix))
+              }
+            }
+          })
+        }
       }
 
       AST.traverse(ast, (node, next) => {
@@ -286,7 +330,7 @@ export namespace Nest {
 
       const traverse = (_module: Module) => {
         _module.controllers.forEach(v => {
-          const _paths = this.getControllerPath(v)
+          const _paths = this.getControllerPath(v, _module.prefixPath)
           _paths.forEach(v => {
             const key = `${v.filePath}-${v.path}-${v.fnName}-${v.method}-${v.version}`
             if (pathSet.has(key)) return
