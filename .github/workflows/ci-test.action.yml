@@ -1,0 +1,43 @@
+name: CI test
+
+on:
+  push:
+    branches:
+      - ci-test
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org/
+
+      - name: 安装依赖
+        run: npm i
+
+      - name: 更新版本号
+        run: npm version minor
+
+      - name: 测试更新结果
+        run: npm version
+
+      # - name: 安装 vsce
+      #   run: npm install -g vsce
+
+      # - name: 编译
+      #   run: vsce package -o dist.vsix
+
+      # - name: 上传
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: code-coverage-report
+      #     path: dist.vsix
+
+      # - name: 编译上传
+      #   run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
