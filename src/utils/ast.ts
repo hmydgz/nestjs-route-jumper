@@ -198,7 +198,9 @@ export namespace NestDecorator {
           start: ts.getLineAndCharacterOfPosition(ast, member.name.getStart(ast)),
           end: ts.getLineAndCharacterOfPosition(ast, member.name.getEnd()),
         }
-        Object.entries(decorators).forEach(([key, args]) => {
+        const _decorators = Object.entries(decorators)
+        for (let index = 0; index < _decorators.length; index++) {
+          const [key, args] = _decorators[index];
           if (ReqMethodSet.has(key)) {
             mappings.push({
               method: key as Methods,
@@ -209,8 +211,9 @@ export namespace NestDecorator {
               fnName: AST.getIdentifierName(member.name as ts.Identifier),
               line,
             })
+            break
           }
-        })
+        }
       })
 
       return mappings
