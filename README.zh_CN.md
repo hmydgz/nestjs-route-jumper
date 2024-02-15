@@ -1,5 +1,7 @@
 # Nestjs Route Jumper
 
+[![Visual Studio Marketplace](https://flat.badgen.net/vs-marketplace/i/hmydgz.nestjs-route-jumper?icon=visualstudio)](https://marketplace.visualstudio.com/items?itemName=hmydgz.nestjs-route-jumper)
+
 简体中文 | [English](./README.md)
 
 为 `Nest` 项目提供的一个通过接口访问路径快速跳转到代码块的插件

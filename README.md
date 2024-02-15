@@ -1,5 +1,7 @@
 # Nestjs Route Jumper
 
+[![Visual Studio Marketplace](https://flat.badgen.net/vs-marketplace/i/hmydgz.nestjs-route-jumper?icon=visualstudio)](https://marketplace.visualstudio.com/items?itemName=hmydgz.nestjs-route-jumper)
+
 English | [简体中文](./README.zh_CN.md)
 
 A plugin provided for the `Nest` project to quickly jump to code blocks through interface addresses
