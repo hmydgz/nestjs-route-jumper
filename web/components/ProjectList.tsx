@@ -21,6 +21,7 @@ const ProjectList: React.FC = () => {
         <AppList apps={v.apps} />
       </div>
     </div> : null)}
+    { !store.renderProjects.length && <div className="h-[calc(100vh-80px)] flex items-center justify-center">Empty</div> }
   </>)
 }
 

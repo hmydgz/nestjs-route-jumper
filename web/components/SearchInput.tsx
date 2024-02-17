@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import { useStore } from "../store"
 import { StoreActionType } from "../types"
+import clsx from "clsx"
 
 const SearchInput: React.FC = () => {
   const [store, dispatch] = useStore()
@@ -28,7 +29,7 @@ const SearchInput: React.FC = () => {
     submitSearch()
   }, [])
 
-  return <div className="search-bar sticky top-0 pb-2 shadow">
+  return <div className={clsx('search-bar sticky top-0 pb-2', store.renderProjects.length ? 'shadow' : '')}>
     <input
       ref={inputRef}
       value={value}
