@@ -84,46 +84,66 @@ function isMatch(_path: string, value: string): [boolean, { text: string, keywor
         startItemIndex = index
         break
       } else if (element.includes(':')) {
-        startItemIndex = index
-        startItemIsParams = true
+        // 纯参数的情况
+        if (element.replace(/\:(\w)+/g, '') === '') {
+          startItemIndex = index
+          startItemIsParams = true
+          // 非纯参数需要完整的正则匹配，不做子字符串匹配
+        } else {
+          const reg = new RegExp(`^${element.replace(/\:(\w)+/g, '(\\w)+')}$`)
+          if (reg.test(_values[0])) {
+            startItemIndex = index
+            startItemIsParams = true
+          }
+        }
         break
       }
     }
-
+    if (startItemIndex === -1) return [false, [], 0]
     // 超长 /api/redis/:xxx 无法匹配 redis/123/123 这种情况
     if ((_paths.length - startItemIndex) < _values.length) return [false, [], 0]
 
-    let startMatchStr = startItemIsParams ? _paths[startItemIndex] : _values[0]
+    let startMatch = []
     let matchWeight = 0
 
-    for (let index = 1; index < _values.length; index++) {
+    for (let index = 0; index < _values.length; index++) {
       const __path = _paths[index + startItemIndex]
       const __value = _values[index]
+      const checkParams = () => {
+        let res = false
+        // 纯参数的情况
+        if (__path.replace(/\:(\w)+/g, '') === '') {
+          startMatch.push(__path)
+          matchWeight += 0.5
+          res = true
+          // 非纯参数需要完整的正则匹配，不做子字符串匹配
+        } else {
+          const reg = new RegExp(`^${__path.replace(/\:(\w)+/g, '(\\w)+')}$`)
+          if (reg.test(__value)) {
+            startMatch.push(__path)
+            matchWeight += 0.75
+            res = true
+          }
+        }
+        return res
+      }
+      // 参数部分，跳过
+      if (__path.includes(':') && checkParams()) continue
+
       // 末尾了就只从前面匹配
       if (index === _values.length - 1) {
-        if (__path.includes(':')) {
-          startMatchStr += `/${__path}`
-          matchWeight += 0.5
-          continue
-        } else if (__path.startsWith(__value)) {
-          startMatchStr += `/${__value}`
+        if (__path.startsWith(__value)) {
+          startMatch.push(__path)
           matchWeight += 1
           continue
         }
       }
-      // 参数部分，跳过
-      if (__path.includes(':')) {
-        startMatchStr += `/${__path}`
-        matchWeight += 0.5
-        continue
-      }
       // 中间的需要完全匹配
       if (__path !== __value) return [false, [], 0]
-      startMatchStr += `/${__path}`
+      startMatch.push(__path)
       matchWeight += 1
     }
-    const match = createMatch(startMatchStr, _path)
-    return [true, match, matchWeight / _values.length]
+    return [true, createMatch(startMatch.join('/'), _path), matchWeight / _values.length]
   } else {
     return _path.includes(_value) ? [true, createMatch(_value, _path), 1] : [false, [], 0]
   }
