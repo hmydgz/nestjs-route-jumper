@@ -1,6 +1,6 @@
-import { FC, SVGProps } from "react"
-import { EventType, Methods, SearchResult } from "../../src/types"
-import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, CodiconGoToFile, TablerHttpPatch, TablerHttpOptions, TablerHttpHead, CodiconArrowRight } from './Icon'
+import { FC, SVGProps, useState } from "react"
+import { EventType, SearchResult } from "../../src/types"
+import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, CodiconGoToFile, TablerHttpPatch, TablerHttpOptions, TablerHttpHead, CodiconArrowRight, TablerCopy, TablerCopyCheckFilled } from './Icon'
 import { requset } from "../utils/requset"
 
 const MethodMap: Record<string, (args: SVGProps<SVGSVGElement>) => JSX.Element> = {
@@ -35,30 +35,45 @@ const Path: FC<{ data: SearchResult }> = ({ data }) => {
   )) : data.path }</>
 }
 
+const Item: FC<{ data: SearchResult }> = ({ data }) => {
+  const Icon = MethodMap[data.method] ?? TablerHttpGet
+  const [isCopySuccess, setIsCopySuccess] = useState(false)
+
+  function handleCopyPath(e: React.MouseEvent<SVGSVGElement>) {
+    e.stopPropagation()
+    navigator.clipboard.writeText(data.path).then(() => {
+      setIsCopySuccess(true)
+      setTimeout(() => setIsCopySuccess(false), 1000)
+    })
+  }
+
+  const CopyIcon = isCopySuccess ? TablerCopyCheckFilled : TablerCopy
+
+  return <div className="group rounded hover:bg-black/30 px-1 py-0.5" onClick={() => handleJumperToMethod(data)}>
+    <div className="flex items-center gap-1">
+      <div className="text-xl" title={data.method}><Icon style={{ color: MethodIconColorMap[data.method] }} /></div>
+      <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden" style={{ color: 'var(--vscode-breadcrumb-foreground)' }}>
+        <Path data={data} />
+      </div>
+      <CopyIcon className="opacity-0 group-hover:opacity-100 text-sm" onClick={(e) => handleCopyPath(e)} />
+    </div>
+    <div className="flex items-center gap-1">
+      <div className="text-base"><CodiconSymbolMethod style={{ color: 'var(--vscode-symbolIcon-methodForeground)' }} /></div>
+      <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden">
+        { data.className ? <>
+          <span className="text-#4ec9b0">{ data.className }</span>
+          <span>.</span>
+        </> : null }
+        <span className="text-#dcdcaa">{ data.fnName }</span>
+      </div>
+      <div className="opacity-0 group-hover:opacity-100"><CodiconArrowRight /></div>
+    </div>
+  </div>
+}
+
 const ReqMapping: React.FC<{ mappings: SearchResult[] }> = ({ mappings }) => {
   return (<div className="grid grid-cols-1">
-    { mappings.map(v => {
-      const Icon = MethodMap[v.method] ?? TablerHttpGet
-      return <div className="group rounded hover:bg-black/30 px-1 py-0.5" onClick={() => handleJumperToMethod(v)}>
-        <div className="flex items-center gap-1">
-          <div className="text-xl" title={v.method}><Icon style={{ color: MethodIconColorMap[v.method] }} /></div>
-          <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden" style={{ color: 'var(--vscode-breadcrumb-foreground)' }}>
-            <Path data={v} />
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="text-base"><CodiconSymbolMethod style={{ color: 'var(--vscode-symbolIcon-methodForeground)' }} /></div>
-          <div className="text-sm flex-1 text-ellipsis whitespace-nowrap overflow-hidden">
-            { v.className ? <>
-              <span className="text-#4ec9b0">{ v.className }</span>
-              <span>.</span>
-            </> : null }
-            <span className="text-#dcdcaa">{ v.fnName }</span>
-          </div>
-          <div className="opacity-0 group-hover:opacity-100"><CodiconArrowRight /></div>
-        </div>
-      </div>
-    }) }
+    { mappings.map(v => <Item data={v} key={v.path} />) }
   </div>)
 }
 
