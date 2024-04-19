@@ -42,10 +42,18 @@ export namespace AST {
     const _path = (_node.moduleSpecifier as ts.StringLiteral).text
     const importVarMap: Record<string, ImportVarInfo> = {}
     if (_node.importClause?.namedBindings) {
-      (_node.importClause?.namedBindings as ts.NamedImports).elements.forEach(v => {
-        const _name = getIdentifierName(v.name)
-        importVarMap[_name] = { isDefault: false, path: _path, name: _name }
-      })
+      // 处理 import { ... } from '...'
+      if (_node.importClause?.namedBindings.kind === ts.SyntaxKind.NamedImports) {
+        (_node.importClause?.namedBindings as ts.NamedImports).elements.forEach(v => {
+          const _name = getIdentifierName(v.name)
+          importVarMap[_name] = { isDefault: false, path: _path, name: _name }
+        })
+      // 处理 import * as ... from '...'
+      } else if (_node.importClause?.namedBindings.kind === ts.SyntaxKind.NamespaceImport) {
+        const _name = getIdentifierName((_node.importClause?.namedBindings as ts.NamespaceImport).name)
+        importVarMap[_name] = { isDefault: false, isNamespace: true, path: _path, name: _name }
+      }
+    // 处理 import ... from '...'
     } else if (_node.importClause?.name) {
       const _name = getIdentifierName(_node.importClause.name)
       importVarMap[_name] = { isDefault: true, path: _path }
