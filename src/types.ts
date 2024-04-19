@@ -58,6 +58,7 @@ export enum ProjectType {
 export type ImportVarInfo = {
   path: string
   isDefault: boolean
+  isNamespace?: boolean
   name?: string
 }
 

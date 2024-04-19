@@ -20,7 +20,7 @@ const SearchInput: React.FC = () => {
       dispatch({ type: StoreActionType.SEARCH })
     } catch (error) {
     } finally {
-      dispatch({ type: StoreActionType.SET_SEARCH_LOADING, data: false })
+      requestAnimationFrame(() => dispatch({ type: StoreActionType.SET_SEARCH_LOADING, data: false }))
     }
   }
 

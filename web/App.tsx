@@ -51,7 +51,7 @@ function View() {
     >
       <SvgSpinnersRingResize />
     </span>
-    <ProjectList />
+    { !store.loadingSearch && <ProjectList /> }
   </div>
 }
 
