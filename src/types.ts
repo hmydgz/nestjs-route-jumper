@@ -6,6 +6,7 @@ export enum EventType {
   WEIVIEW_REFRESH = 'WEIVIEW_REFRESH',
   GET_BASE_PATH = 'GET_BASE_PATH',
   GET_PROJECTS = 'GET_PROJECTS',
+  START_SCAN_PROJECT = 'START_SCAN_PROJECT',
 }
 
 export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head'/*  | 'Search' */
@@ -17,8 +18,9 @@ export type ReqMsgJumpToMethod = BaseReqMessage<EventType.JUMP_TO_METHOD, Search
 export type ReqMsgGetBasePath = BaseReqMessage<EventType.GET_BASE_PATH>
 export type ReqMsgGetProject = BaseReqMessage<EventType.GET_PROJECTS>
 export type PushMsgRefresh = BaseReqMessage<EventType.WEIVIEW_REFRESH>
+export type PushMsgStartScanProject = BaseReqMessage<EventType.START_SCAN_PROJECT>
 
-export type RequestMessage = ReqMsgSearch | ReqMsgJumpToMethod | PushMsgRefresh | ReqMsgGetBasePath | ReqMsgGetProject
+export type RequestMessage = ReqMsgSearch | ReqMsgJumpToMethod | PushMsgRefresh | ReqMsgGetBasePath | ReqMsgGetProject | PushMsgStartScanProject
 
 export namespace Res {
   export type Project = {

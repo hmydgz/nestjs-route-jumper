@@ -34,12 +34,15 @@ function View() {
       case EventType.WEIVIEW_REFRESH:
         update()
         break
+      case EventType.START_SCAN_PROJECT:
+        dispatch({ type: StoreActionType.SET_SEARCH_LOADING, data: true })
+        break
     }
   })
 
   return <div className='relative pb-2'>
     <SearchInput />
-    <span
+    <div
       className={clsx(
         'fixed left-0 top-8 z-10 w-full text-5xl flex items-center justify-center transition-all bg-black/60',
         store.loadingSearch ? 'opacity-100' : 'opacity-0 select-none pointer-events-none',
@@ -50,7 +53,7 @@ function View() {
       }}
     >
       <SvgSpinnersRingResize />
-    </span>
+    </div>
     { !store.loadingSearch && <ProjectList /> }
   </div>
 }

@@ -6,8 +6,6 @@ on:
       - "v*"
     branches:
       - main
-    paths:
-      - 'package.json'
 
 jobs:
   build:
