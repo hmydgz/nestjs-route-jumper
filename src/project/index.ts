@@ -9,7 +9,7 @@ import { debounce, getIndexFilePath } from '../utils';
 import { postMessage } from '../utils/postMessage';
 
 // 忽略的目录
-const ignoreDirs = ['node_modules', '.git', '.github', '.vscode', '.idea']
+const ignoreDirs = ['node_modules', '.git', '.github', '.vscode', '.idea', 'dist']
 const ignoreDirsSet = new Set([...ignoreDirs])
 const ignoreDirsReg = new RegExp(`(${ignoreDirs.join('|')})`, 'g')
 
@@ -20,7 +20,11 @@ export class ProjectAnalysis {
   projectMap: Map<string, Project> = new Map();
 
   constructor() {
-    vscode.workspace.workspaceFolders?.forEach((workspace) => this.scanProject(workspace.uri.fsPath));
+    ;(async() => {
+      postMessage({ type: EventType.START_SCAN_PROJECT })
+      await Promise.all((vscode.workspace.workspaceFolders ?? []).map((workspace) => this.scanProject(workspace.uri.fsPath)))
+      postMessage({ type: EventType.WEIVIEW_REFRESH })
+    })()
   }
 
   async scanProject(filePath: string) {
@@ -117,11 +121,12 @@ export class Project {
 
   private watchSaveFile() {
     vscode.workspace.onDidSaveTextDocument((e: vscode.TextDocument) => {
-      this.appMap.forEach((app, appName) => {
+      for (const [appName, app] of this.appMap) {
         if (app.astMap.has(e.fileName)) {
           this.updateApp(appName)
+          return
         }
-      })
+      }
     })
   }
 
