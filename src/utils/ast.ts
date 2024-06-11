@@ -179,19 +179,20 @@ export namespace NestDecorator {
     export const ReqMethodSet = new Set(['Get', 'Post', 'Put', 'Delete', 'Patch', 'All', 'Options', 'Head', 'Search'])
 
     export type Mapping = {
-      method: Methods,
-      path: string[],
-      version: string[],
+      method: Methods
+      path: string[]
+      version: string[]
       fn: ts.MethodDeclaration
       fnName: string
+      filePath?: string
       className: string
       line: {
-        start: ts.LineAndCharacter,
+        start: ts.LineAndCharacter
         end: ts.LineAndCharacter
       }
     }
 
-    export const getMapping = (classNode: ts.ClassDeclaration, ast: ts.SourceFile) => {
+    export const getMapping = (classNode: ts.ClassDeclaration, ast: ts.SourceFile, filePath: string) => {
       const mappings: Mapping[] = []
       const className = AST.getIdentifierName(classNode.name!) || ''
       classNode.members.forEach(_member => {
@@ -214,6 +215,7 @@ export namespace NestDecorator {
               method: key as Methods,
               path: args.length ? AST.getStringList(args[0]) : [''],
               version,
+              filePath,
               fn: member,
               className,
               fnName: AST.getIdentifierName(member.name as ts.Identifier),
@@ -221,6 +223,24 @@ export namespace NestDecorator {
             })
             break
           }
+        }
+      })
+
+      return mappings
+    }
+
+    /**
+     * 处理继承的合并 mapping , 子类覆盖父类的同名方法 mapping
+     */
+    export const mergeMapping = (parentMappings: Mapping[], childMappings: Mapping[]) => {
+      const mappings: Mapping[] = [...parentMappings]
+
+      childMappings.forEach(v => {
+        const _index = mappings.findIndex(_v => _v.fnName === v.fnName)
+        if (_index === -1) {
+          mappings.push(v)
+        } else {
+          mappings[_index] = v
         }
       })
 
