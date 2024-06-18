@@ -26,7 +26,10 @@ jobs:
 
       - name: 获取版本号
         id: get_tag
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: 更新 NPM 版本号
         run: npm version $VERSION
