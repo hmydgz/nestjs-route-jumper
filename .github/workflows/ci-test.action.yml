@@ -37,10 +37,10 @@ jobs:
 
       - name: Commit changes
         run: |
-          git checkout origin/ci-test
-          git add package.json
-          git commit -m "Update version to $VERSION"
-          git push
+          git checkout ci-test
+        # git add package.json
+        # git commit -m "Update version to $VERSION"
+        # git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ env.VERSION }}
