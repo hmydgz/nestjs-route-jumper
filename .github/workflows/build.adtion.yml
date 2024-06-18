@@ -18,11 +18,11 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
-      # - name: 安装依赖
-      #   run: npm i
+      - name: 安装依赖
+        run: npm i
 
-      # - name: 安装 vsce
-      #   run: npm install -g vsce
+      - name: 安装 vsce
+        run: npm install -g vsce
 
       - name: 获取版本号
         id: get_tag
@@ -30,12 +30,6 @@ jobs:
           TAG_NAME=${GITHUB_REF#refs/tags/}
           VERSION=${TAG_NAME#v}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      # - name: Print version
-      #   run: |
-      #     echo "The extracted version is: $VERSION"
-      #   env:
-      #     VERSION: ${{ env.VERSION }}
 
       - name: 更新 NPM 版本号
         run: npm version $VERSION
@@ -54,6 +48,7 @@ jobs:
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ env.VERSION }}
 
       # - name: 编译上传
       #   run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
