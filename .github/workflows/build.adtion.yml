@@ -2,10 +2,8 @@ name: Build
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'package.json'
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
@@ -21,19 +19,30 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: 安装依赖
-        run: npm i
+        run: npm ci
 
       - name: 安装 vsce
         run: npm install -g vsce
 
-      # - name: 编译
-      #   run: vsce package -o dist.vsix
+      - name: 获取版本号
+        id: get_tag
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      # - name: 上传
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: code-coverage-report
-      #     path: dist.vsix
+      - name: 更新 NPM 版本号
+        run: npm version $VERSION
 
-      - name: 编译上传
-        run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Commit changes
+        run: |
+          git add package.json
+          git commit -m "Update version to $VERSION"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # - name: 编译上传
+      #   run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
