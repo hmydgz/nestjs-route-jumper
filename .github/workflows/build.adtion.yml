@@ -32,7 +32,7 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
       - name: 更新 NPM 版本号
-        run: npm version $VERSION
+        run: npm version $VERSION --no-git-tag-version
         env:
           VERSION: ${{ env.VERSION }}
 
