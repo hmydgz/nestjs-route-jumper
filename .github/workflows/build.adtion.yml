@@ -31,27 +31,29 @@ jobs:
           VERSION=${TAG_NAME#v}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Print version
-        run: |
-          echo "The extracted version is: $VERSION"
+      # - name: Print version
+      #   run: |
+      #     echo "The extracted version is: $VERSION"
+      #   env:
+      #     VERSION: ${{ env.VERSION }}
+
+      - name: 更新 NPM 版本号
+        run: npm version $VERSION
         env:
           VERSION: ${{ env.VERSION }}
 
-      # - name: 更新 NPM 版本号
-      #   run: npm version $VERSION
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      # - name: Configure git
-      #   run: |
-      #     git config --global user.name 'github-actions[bot]'
-      #     git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-
-      # - name: Commit changes
-      #   run: |
-      #     git add package.json
-      #     git commit -m "Update version to $VERSION"
-      #     git push
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit changes
+        run: |
+          git add package.json
+          git commit -m "Update version to $VERSION"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # - name: 编译上传
       #   run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
