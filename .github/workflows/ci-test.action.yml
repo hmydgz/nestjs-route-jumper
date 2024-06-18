@@ -2,8 +2,10 @@ name: CI test
 
 on:
   push:
-    branches:
-      - ci-test
+    tags:
+      - test-*
+    # branches:
+    #   - ci-test
 
 jobs:
   build:
