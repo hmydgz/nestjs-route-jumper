@@ -233,6 +233,8 @@ export namespace Nest {
         })
       }
 
+      const routerModules = <ImportVarInfo[]>[]
+
       const traverseRouters = (routeNode: ts.Node, __prefix: string) => {
         if (routeNode.kind === ts.SyntaxKind.ArrayLiteralExpression) {
           const arr = routeNode as ts.ArrayLiteralExpression
@@ -247,6 +249,7 @@ export namespace Nest {
                 if (_module) {
                   const _filePath = this.project.pathResolver(_moduleInfo.path, _module.path)
                   module.importModules.push(this.findModule(Object.assign({}, _module, { path: _filePath }), prefix))
+                  routerModules.push(_module)
                 }
               } else if (obj.children) {
                 traverseRouters(obj.children, _path ? joinPath(__prefix, _path) : __prefix)
@@ -257,6 +260,7 @@ export namespace Nest {
               if (_module) {
                 const _filePath = this.project.pathResolver(_moduleInfo.path, _module.path)
                 module.importModules.push(this.findModule(Object.assign({}, _module, { path: _filePath }), __prefix))
+                routerModules.push(_module)
               }
             }
           })
@@ -285,7 +289,9 @@ export namespace Nest {
         }
       })
 
-      _importModules.forEach(v => module.importModules.push(this.findModule(v)))
+      _importModules // 过滤使用路由模块进行注册的模块
+        .filter(v => routerModules.every(_v => (v.name ?? '') !== (_v.name ?? '')))
+        .forEach(v => module.importModules.push(this.findModule(v)))
       _controllers.forEach(v => module.controllers.push(this.findController(v)))
 
       if (!this.moduleMap.has(_moduleInfo.path)) this.moduleMap.set(_moduleInfo.path, {})
