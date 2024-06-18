@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - "v*"
-    branches:
-      - main
 
 jobs:
   build:
@@ -13,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: main
 
       - name: 安装 Node.js
         uses: actions/setup-node@v3
@@ -26,14 +26,31 @@ jobs:
       - name: 安装 vsce
         run: npm install -g vsce
 
-      # - name: 编译
-      #   run: vsce package -o dist.vsix
+      - name: 获取版本号
+        id: get_tag
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # - name: 上传
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: code-coverage-report
-      #     path: dist.vsix
+      - name: 更新 npm 版本号
+        run: npm version $VERSION --no-git-tag-version
+        env:
+          VERSION: ${{ env.VERSION }}
+
+      - name: Configure git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Commit changes
+        run: |
+          git add package.json
+          git commit -m "CI Update version to $VERSION"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ env.VERSION }}
 
       - name: 编译上传
         run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
