@@ -10,6 +10,15 @@ import { joinPath } from '../../utils';
 type FilePath = string
 type ModuleName = string
 
+/**
+ * 默认导出
+ */
+const DEFAULT_KEY = '__DEFAULT__'
+/**
+ * 匿名变量
+ */
+const ANONYMOUS_KEY = '__ANONYMOUS__'
+
 export namespace Nest {
   export type Controller = Omit<ControllerOptions, 'version'> & {
     version?: string[]
@@ -224,6 +233,8 @@ export namespace Nest {
         })
       }
 
+      const routerModules = <ImportVarInfo[]>[]
+
       const traverseRouters = (routeNode: ts.Node, __prefix: string) => {
         if (routeNode.kind === ts.SyntaxKind.ArrayLiteralExpression) {
           const arr = routeNode as ts.ArrayLiteralExpression
@@ -238,6 +249,7 @@ export namespace Nest {
                 if (_module) {
                   const _filePath = this.project.pathResolver(_moduleInfo.path, _module.path)
                   module.importModules.push(this.findModule(Object.assign({}, _module, { path: _filePath }), prefix))
+                  routerModules.push(_module)
                 }
               } else if (obj.children) {
                 traverseRouters(obj.children, _path ? joinPath(__prefix, _path) : __prefix)
@@ -248,6 +260,7 @@ export namespace Nest {
               if (_module) {
                 const _filePath = this.project.pathResolver(_moduleInfo.path, _module.path)
                 module.importModules.push(this.findModule(Object.assign({}, _module, { path: _filePath }), __prefix))
+                routerModules.push(_module)
               }
             }
           })
@@ -276,7 +289,9 @@ export namespace Nest {
         }
       })
 
-      _importModules.forEach(v => module.importModules.push(this.findModule(v)))
+      _importModules // 过滤使用路由模块进行注册的模块
+        .filter(v => routerModules.every(_v => (v.name ?? '') !== (_v.name ?? '')))
+        .forEach(v => module.importModules.push(this.findModule(v)))
       _controllers.forEach(v => module.controllers.push(this.findController(v)))
 
       if (!this.moduleMap.has(_moduleInfo.path)) this.moduleMap.set(_moduleInfo.path, {})
@@ -294,28 +309,74 @@ export namespace Nest {
       const ast = this.getAST(_moduleInfo.path)
       const controller: Controller = { mappings: [], filePath: _moduleInfo.path }
 
+      const extendsClassNameMap: Map<string, string> = new Map()
+      const importVarMap = this.importVarMap.get(_moduleInfo.path)!
+      const classMap = new Map<string, ts.Node>()
+
+      const handleClassDeclaration = (node: ts.Node) => {
+        const classNode = node as ts.ClassDeclaration
+        // 可能是匿名类
+        const name = classNode.name ? AST.getIdentifierName(classNode.name as ts.Identifier) : ANONYMOUS_KEY
+        const { isDefault, isExport, decorators } = AST.filterDecorator(classNode.modifiers!)
+        classMap.set(isDefault ? DEFAULT_KEY : name, node)
+        // 仅目标类需要继续读取信息
+        if (!isExport || _moduleInfo.isDefault !== isDefault || (!_moduleInfo.isDefault && _moduleInfo.name !== name)) return
+        // 有 Controller 装饰器
+        if (decorators.hasOwnProperty('Controller')) {
+          const options = NestDecorator.Controller.getArgs(decorators.Controller)
+          Object.assign(controller, options)
+          controller.mappings.push(...NestDecorator.RequsetMapping.getMapping(classNode, ast, _moduleInfo.path))
+        }
+
+        // 继承的类，子类不管有没有 Controller 装饰器都需要加上继承的 Mapping
+        classNode.heritageClauses?.forEach(v => {
+          // TODO: 类只有单继承，可以链式继承(之后再实现链式继承)
+          extendsClassNameMap.set(name, AST.getIdentifierName(v.types[0].expression as ts.Identifier))
+        })
+      }
+
       AST.traverse(ast, (node, next) => {
         switch (node.kind) {
           case ts.SyntaxKind.ImportDeclaration:
             this.saveImportVar(node as ts.ImportDeclaration)
             break
-          case ts.SyntaxKind.ClassDeclaration: {
-            const classNode = node as ts.ClassDeclaration
-            const name = AST.getIdentifierName(classNode.name as ts.Identifier)
-            const { isDefault, isExport, decorators } = AST.filterDecorator(classNode.modifiers!)
-            if (!isExport || _moduleInfo.isDefault !== isDefault || (!_moduleInfo.isDefault && _moduleInfo.name !== name)) return
-            // 找到指定 Controller
-            if (decorators.hasOwnProperty('Controller')) {
-              const options = NestDecorator.Controller.getArgs(decorators.Controller)
-              Object.assign(controller, options)
-              controller.mappings = NestDecorator.RequsetMapping.getMapping(classNode, ast)
-            }
+          case ts.SyntaxKind.ClassDeclaration: { // 类声明
+            handleClassDeclaration(node)
           } break
           default:
             next()
             break
         }
       })
+
+      if (extendsClassNameMap.size) { // 处理继承
+        const className = _moduleInfo.isDefault ? DEFAULT_KEY : _moduleInfo.name!
+        // 从入参的目标类上开始找父类
+        const parentName = extendsClassNameMap.get(className)!
+        if (classMap.has(parentName)) { // 在当前文件中
+          const parentClassNode = classMap.get(parentName) as ts.ClassDeclaration
+          const { decorators } = AST.filterDecorator(parentClassNode.modifiers!)
+          if (decorators.hasOwnProperty('Controller')) { // 父类是 Controller
+            const options = NestDecorator.Controller.getArgs(decorators.Controller)
+            if (!controller.path && options.path) {
+              controller.path = Array.isArray(options.path) ? options.path : [options.path]
+            }
+            controller.mappings.push(...NestDecorator.RequsetMapping.getMapping(parentClassNode, ast, _moduleInfo.path))
+            controller.mappings = NestDecorator.RequsetMapping.mergeMapping(
+              controller.mappings,
+              NestDecorator.RequsetMapping.getMapping(
+                classMap.get(className)! as ts.ClassDeclaration,
+                ast,
+                _moduleInfo.path
+              )
+            )
+          } else { // TODO 父类不是 Controller，需要看整个继承链，先不管
+
+          }
+        } else if (importVarMap[parentName]) { // TODO 从其他地方导入的
+
+        }
+      }
 
       if (!this.controllerMap.has(_moduleInfo.path)) this.controllerMap.set(_moduleInfo.path, {})
       this.controllerMap.get(_moduleInfo.path)![_moduleInfo.name || 'DefaultExportModule'] = controller
@@ -359,7 +420,7 @@ export namespace Nest {
           mapping.path.forEach(path => {
             let _path = joinPath(prefix, path)
             if (!_path.endsWith('/')) _path += '/'
-            const { version, ...rest } = mapping
+            const { version, filePath, ...rest } = mapping
             const _versions = [...new Set([...version, ...(_controller.version ?? [])])]
             if (!_versions.length) _versions.push('')
             _versions.forEach(_version => {
@@ -367,7 +428,7 @@ export namespace Nest {
                 ...rest,
                 version: _version,
                 path: _path,
-                filePath: _controller.filePath
+                filePath: filePath || _controller.filePath,
               })
             })
           })
