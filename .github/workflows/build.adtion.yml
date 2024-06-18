@@ -45,7 +45,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add .
+          git add package.json
           git commit -m "Update version to $VERSION"
           git push
         env:
