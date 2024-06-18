@@ -232,7 +232,7 @@ export class Project {
       createApp(
         'main',
         path.resolve(configPath, '../', config.sourceRoot || 'src'),
-        config.entryFile ||'main'
+        config.entryFile || 'main'
       )
     }
   }
