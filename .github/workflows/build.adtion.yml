@@ -46,11 +46,11 @@ jobs:
       - name: Commit changes
         run: |
           git add package.json
-          git commit -m "Update version to $VERSION"
+          git commit -m "CI Update version to $VERSION"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ env.VERSION }}
 
-      # - name: 编译上传
-      #   run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
+      - name: 编译上传
+        run: vsce publish -p ${{ secrets.VSCODE_PUBLISHER_TOKEN }}
