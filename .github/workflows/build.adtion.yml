@@ -18,11 +18,11 @@ jobs:
           node-version: 18
           registry-url: https://registry.npmjs.org/
 
-      - name: 安装依赖
-        run: npm i
+      # - name: 安装依赖
+      #   run: npm i
 
-      - name: 安装 vsce
-        run: npm install -g vsce
+      # - name: 安装 vsce
+      #   run: npm install -g vsce
 
       - name: 获取版本号
         id: get_tag
