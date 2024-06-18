@@ -43,6 +43,7 @@ jobs:
 
       - name: Commit changes
         run: |
+          git checkout ci-test
           git add package.json
           git commit -m "Update version to $VERSION"
           git push
