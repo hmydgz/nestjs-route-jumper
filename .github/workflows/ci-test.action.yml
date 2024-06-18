@@ -12,11 +12,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: 安装 Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          registry-url: https://registry.npmjs.org/
+      # - name: 安装 Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+      #     registry-url: https://registry.npmjs.org/
 
       # - name: 获取版本号
       #   id: get_tag
