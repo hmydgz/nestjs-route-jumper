@@ -33,7 +33,7 @@ const SearchInput: React.FC = () => {
     <input
       ref={inputRef}
       value={value}
-      placeholder="Search"
+      placeholder="Enter Search"
       onChange={e => setValue(e.target.value)}
       onKeyDown={handleSearch}
     />

@@ -11,8 +11,8 @@ const ProjectList: React.FC = () => {
   const [store] = useStore()
   function getDir(path: string) {
     let _path = path.replace(store.baseUrl, '')
-    if (_path.startsWith('\\')) return _path.substring(1, _path.length)
-    return path.replace(store.baseUrl, '')
+    if (_path.startsWith('\\')) return _path.substring(1, _path.length).replace(/\\/g, '/')
+    return path.replace(store.baseUrl, '').replace(/\\/g, '/')
   }
 
   return (<>
