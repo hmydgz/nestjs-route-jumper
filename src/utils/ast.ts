@@ -145,9 +145,7 @@ export namespace NestDecorator {
         version: [],
       }
 
-      if (_node.length === 0) {
-        obj.path = ['']
-      } else {
+      if (_node.length) {
         switch (_node[0].kind) {
           case ts.SyntaxKind.StringLiteral:
           case ts.SyntaxKind.ArrayLiteralExpression: {
@@ -170,6 +168,8 @@ export namespace NestDecorator {
           } break
         }
       }
+
+      if (!obj.path?.length) obj.path = ['']
 
       return obj
     }
