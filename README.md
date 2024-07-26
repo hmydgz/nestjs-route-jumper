@@ -6,7 +6,7 @@ English | [简体中文](./README.zh_CN.md)
 
 A plugin provided for the `Nest` project to quickly jump to code blocks through interface addresses
 
-By querying the access path for matching Controllers and Methods, it is possible to jump to the corresponding function definition
+By querying the access path for matching `Controllers` and `Methods`, it is possible to jump to the corresponding function definition
 
 ![priview](https://github.com/hmydgz/nestjs-route-jumper/raw/main/doc/images/priview.gif)
 
@@ -16,7 +16,11 @@ Open it through the Nest icon in the sidebar, where you can enter the interface 
 
 ## Illustrate
 
-Currently, it supports querying routes explicitly declared by decorators exported using `@nestjs/common`, as well as [Router module](https://docs.nestjs.com/recipes/router-module), Custom decorators and third-party packages are currently not supported
+Currently supported queries for routing-related functionality
+1. routes declared by the `@Controller` `@Get` `@Post` `@Put` `@Patch` `@Delete` `@Options` `@Head` `@All` `@Version` decorator exported from `@nestjs/common`.
+2. routes handled by the [Router module](https://docs.nestjs.com/recipes/router-module) in `nest`. ![priview](https://github.com/hmydgz/nestjs-route-jumper/raw/main/doc/images/router_module.png)
+3. single inheritance for classes that support `@Controller`. ![priview](https://github.com/hmydgz/nestjs-route-jumper/raw/main/doc/images/controller_extend.png)
+4. Supports the [standard mode / monorepo mode](https://docs.nestjs.com/cli/monorepo#monorepo-mode).
 
 ## Visual Studio Marketplace
 
