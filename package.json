@@ -2,7 +2,7 @@
   "name": "nestjs-route-jumper",
   "displayName": "Nestjs Route Jumper",
   "description": "A tool developed for nestjs to search for controllers through access paths ",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "publisher": "hmydgz",
   "icon": "resources/logo.png",
   "engines": {
