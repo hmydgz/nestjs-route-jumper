@@ -1,6 +1,6 @@
 import { FC, SVGProps, useState } from "react"
-import { EventType, SearchResult } from "../../src/types"
-import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, CodiconGoToFile, TablerHttpPatch, TablerHttpOptions, TablerHttpHead, CodiconArrowRight, TablerCopy, TablerCopyCheckFilled } from './Icon'
+import { EventType, Methods, SearchResult } from "../../src/types"
+import { CodiconSymbolMethod, CarbonHttp, TablerHttpDelete, TablerHttpGet, TablerHttpPost, TablerHttpPut, TablerHttpPatch, TablerHttpOptions, TablerHttpHead, CodiconArrowRight, TablerCopy, TablerCopyCheckFilled, MaterialSymbolsFindInPageOutlineRounded } from './Icon'
 import { requset } from "../utils/requset"
 
 const MethodMap: Record<string, (args: SVGProps<SVGSVGElement>) => JSX.Element> = {
@@ -12,9 +12,10 @@ const MethodMap: Record<string, (args: SVGProps<SVGSVGElement>) => JSX.Element> 
   Options: TablerHttpOptions,
   Head: TablerHttpHead,
   All: CarbonHttp,
+  Search: MaterialSymbolsFindInPageOutlineRounded,
 }
 
-const MethodIconColorMap = {
+const MethodIconColorMap: Record<Methods, string> = {
   Get: 'rgb(107,221,154)',
   Post: 'rgb(255,228,123)',
   Put: 'rgb(116,174,246)',
@@ -23,6 +24,7 @@ const MethodIconColorMap = {
   Options: 'rgb(241,94,176)',
   Head: 'rgb(107,221,154)',
   All: 'rgb(107,221,154)',
+  Search: 'rgb(107,221,154)',
 }
 
 function handleJumperToMethod(target: SearchResult) {
