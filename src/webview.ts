@@ -3,6 +3,9 @@ import { getNonce } from './utils';
 import { ProjectAnalysis } from './project';
 import { setPostMessage } from './utils/postMessage';
 
+/**
+ * 侧边栏
+ */
 export class SilderWebviewProvider implements vscode.WebviewViewProvider {
 
   public static readonly viewType = 'webview';

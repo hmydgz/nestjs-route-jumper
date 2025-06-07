@@ -70,6 +70,16 @@ export namespace Nest {
     enableVersioning = false
 
     /**
+     * 默认版本
+     */
+    defaultVersion: string[] = []
+
+    /**
+     * 前缀
+     */
+    versionPrefix = 'v'
+
+    /**
      * 最近获取过的AST对象文件路径
      */
     private _currentASTFilePath = '';
@@ -171,8 +181,21 @@ export namespace Nest {
                 // 开启版本
               } else if (expressionText.includes('enableVersioning')) {
                 const args = _node.arguments
-                if (args.length === 0 || args[0].getText(ast).replace(/[\n\s]/g, '').includes('VersioningType.URI')) {
+
+                if (args.length === 0 || args?.[0]?.getText(ast).replace(/[\n\s]/g, '').includes('VersioningType.URI')) {
                   this.enableVersioning = true
+                  // 获取版本配置
+                  const _versioningOptions = AST.getObj(args[0] as ts.ObjectLiteralExpression)
+                  if (_versioningOptions['defaultVersion']) {
+                    this.defaultVersion = AST.getStringList(_versioningOptions['defaultVersion'])
+                  }
+                  if (_versioningOptions['prefix']) {
+                    if (_versioningOptions['prefix'].kind === ts.SyntaxKind.StringLiteral) {
+                      this.versionPrefix = AST.getStr(_versioningOptions['prefix'] as ts.StringLiteral)
+                    } else if (_versioningOptions['prefix'].kind === ts.SyntaxKind.FalseKeyword) {
+                      this.versionPrefix = ''
+                    }
+                  }
                 }
               }
             }
@@ -397,7 +420,7 @@ export namespace Nest {
             if (pathSet.has(key)) return
             pathSet.add(key)
             let prefix = this.globalPrefix || ''
-            if (this.enableVersioning && v.version) prefix += `/v${v.version}`
+            if (this.enableVersioning && v.version) prefix += `/${this.versionPrefix}${v.version}`
             if (prefix) v.path = prefix + v.path
             if (!this.pathMap.has(v.path)) this.pathMap.set(v.path, [])
             this.pathMap.get(v.path)?.push(v)
@@ -421,8 +444,14 @@ export namespace Nest {
             let _path = joinPath(prefix, path)
             if (!_path.endsWith('/')) _path += '/'
             const { version, filePath, ...rest } = mapping
-            const _versions = [...new Set([...version, ...(_controller.version ?? [])])]
+            // 方法上的标记优先级最高，没有则使用 Controller 上的标记，再没有则使用默认版本
+            const _versions = version.length
+              ? version
+              : _controller.version?.length
+                ? _controller.version
+                : this.defaultVersion
             if (!_versions.length) _versions.push('')
+
             _versions.forEach(_version => {
               paths.push({
                 ...rest,
