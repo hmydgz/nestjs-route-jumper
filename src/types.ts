@@ -9,7 +9,7 @@ export enum EventType {
   START_SCAN_PROJECT = 'START_SCAN_PROJECT',
 }
 
-export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search' | 'Sse'
+export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search'
 
 export type BaseReqMessage<T, U = undefined> = U extends undefined ? { type: T, data?: U } : { type: T, data: U }
 
