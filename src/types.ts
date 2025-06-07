@@ -9,7 +9,7 @@ export enum EventType {
   START_SCAN_PROJECT = 'START_SCAN_PROJECT',
 }
 
-export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head'/*  | 'Search' */
+export type Methods = 'Get' | 'Post' | 'Put' | 'Delete' | 'Patch' | 'All' | 'Options' | 'Head' | 'Search' | 'Sse'
 
 export type BaseReqMessage<T, U = undefined> = U extends undefined ? { type: T, data?: U } : { type: T, data: U }
 
@@ -20,7 +20,13 @@ export type ReqMsgGetProject = BaseReqMessage<EventType.GET_PROJECTS>
 export type PushMsgRefresh = BaseReqMessage<EventType.WEIVIEW_REFRESH>
 export type PushMsgStartScanProject = BaseReqMessage<EventType.START_SCAN_PROJECT>
 
-export type RequestMessage = ReqMsgSearch | ReqMsgJumpToMethod | PushMsgRefresh | ReqMsgGetBasePath | ReqMsgGetProject | PushMsgStartScanProject
+export type RequestMessage =
+  | ReqMsgSearch
+  | ReqMsgJumpToMethod
+  | PushMsgRefresh
+  | ReqMsgGetBasePath
+  | ReqMsgGetProject
+  | PushMsgStartScanProject
 
 export namespace Res {
   export type Project = {
@@ -57,6 +63,9 @@ export enum ProjectType {
   NESTJS = 'NESTJS',
 }
 
+/**
+ * 导入的变量信息
+ */
 export type ImportVarInfo = {
   path: string
   isDefault: boolean
@@ -75,6 +84,10 @@ export namespace NestCliConfig {
      */
     collection?: string;
     compilerOptions?: CompilerOptions;
+    /**
+     * Default import prefix for newly generated libraries.
+     */
+    defaultLibraryPrefix?: string;
     /**
      * The entry file where 'nest start' work with. Default to 'main'.
      */

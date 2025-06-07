@@ -239,6 +239,8 @@ export class Project {
 
   private _updateAppTimerMap = new Map<string, () => void>()
   private updateApp(appName: string) {
+    console.log('updateApp', appName);
+
     if (!this._updateAppTimerMap.has(appName)) {
       this._updateAppTimerMap.set(appName, debounce(() => {
         switch (this.projectType) {

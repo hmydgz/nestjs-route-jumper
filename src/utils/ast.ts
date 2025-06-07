@@ -176,7 +176,7 @@ export namespace NestDecorator {
   }
 
   export namespace RequsetMapping {
-    export const ReqMethodSet = new Set(['Get', 'Post', 'Put', 'Delete', 'Patch', 'All', 'Options', 'Head', 'Search'])
+    export const ReqMethodSet = new Set(['Get', 'Post', 'Put', 'Delete', 'Patch', 'All', 'Options', 'Head', 'Search', 'See'])
 
     export type Mapping = {
       method: Methods
